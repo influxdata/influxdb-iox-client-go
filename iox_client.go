@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/apache/arrow/go/arrow/flight"
+	management "github.com/influxdata/influxdb-iox-client-go/internal/management"
 	influxdbpbdataprotocol "github.com/influxdata/influxdb-pb-data-protocol/golang"
-	management "github.com/influxdata/influxdbiox/internal/management"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
 )

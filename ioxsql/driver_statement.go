@@ -5,7 +5,7 @@ import (
 	"database/sql/driver"
 	"errors"
 
-	"github.com/influxdata/influxdbiox"
+	"github.com/influxdata/influxdb-iox-client-go"
 )
 
 var (

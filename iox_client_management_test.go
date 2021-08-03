@@ -3,7 +3,7 @@ package influxdbiox_test
 import (
 	"context"
 
-	"github.com/influxdata/influxdbiox"
+	"github.com/influxdata/influxdb-iox-client-go"
 )
 
 func ExampleClient_CreateDatabase() {

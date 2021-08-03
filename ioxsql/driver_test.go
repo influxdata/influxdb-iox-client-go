@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/apache/arrow/go/arrow"
-	"github.com/influxdata/influxdbiox"
-	"github.com/influxdata/influxdbiox/ioxsql"
+	"github.com/influxdata/influxdb-iox-client-go"
+	"github.com/influxdata/influxdb-iox-client-go/ioxsql"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

@@ -1,4 +1,4 @@
-module github.com/influxdata/influxdbiox
+module github.com/influxdata/influxdb-iox-client-go
 
 go 1.16
 

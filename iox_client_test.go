@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/apache/arrow/go/arrow/array"
-	"github.com/influxdata/influxdbiox"
+	"github.com/influxdata/influxdb-iox-client-go"
 	"github.com/stretchr/testify/require"
 )
 

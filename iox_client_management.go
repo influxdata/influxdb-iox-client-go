@@ -3,7 +3,7 @@ package influxdbiox
 import (
 	"context"
 
-	management "github.com/influxdata/influxdbiox/internal/management"
+	management "github.com/influxdata/influxdb-iox-client-go/internal/management"
 )
 
 func (c *Client) ListDatabases(ctx context.Context) ([]string, error) {
