@@ -22,7 +22,7 @@ type Client struct {
 // NewClient instantiates a connection with the InfluxDB/IOx gRPC services.
 //
 // The gRPC client does not establish a connection here, unless
-// ClientConfig.GRPCClient has been configured with dialer option grpc.WithBlock.
+// ClientConfig.DialOptions includes grpc.WithBlock.
 // For use of the context.Context object in this function, see grpc.DialContext.
 func NewClient(ctx context.Context, config *ClientConfig) (*Client, error) {
 	c := &Client{
@@ -40,7 +40,7 @@ func (c *Client) Reconnect(ctx context.Context) error {
 		_ = c.grpcClient.Close()
 	}
 
-	grpcClient, err := c.config.GetGRPCClient(ctx)
+	grpcClient, err := c.config.newGRPCClient(ctx)
 	if err != nil {
 		return err
 	}

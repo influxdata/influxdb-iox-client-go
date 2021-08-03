@@ -20,7 +20,7 @@ type ClientConfig struct {
 	// Address string as host:port
 	Address string `json:"address"`
 	// Default database; optional unless using sql.Open
-	Database string `json:"database"`
+	Database string `json:"database,omitempty"`
 
 	// Filename containing PEM encoded certificate for root certificate authority
 	// to use when verifying server certificates.
@@ -33,6 +33,10 @@ type ClientConfig struct {
 	// Used to verify the server's hostname on the returned certificates
 	// unless TLSInsecureSkipVerify is true
 	TLSServerName string `json:"tls_server_name,omitempty"`
+
+	// DialOptions are passed to grpc.DialContext when a new gRPC connection
+	// is created.
+	DialOptions []grpc.DialOption `json:"-"`
 
 	// Use this TLS config, instead of allowing this library to generate one
 	// from fields named with prefix "TLS".
@@ -108,9 +112,9 @@ func ClientConfigFromAddressString(s string) (*ClientConfig, error) {
 	}, nil
 }
 
-// GetGRPCClient returns a *grpc.ClientConn based on the config, or returns
+// newGRPCClient returns a *grpc.ClientConn based on the config, or returns
 // the instance already set as ClientConfig.GRPCClient.
-func (dc *ClientConfig) GetGRPCClient(ctx context.Context) (*grpc.ClientConn, error) {
+func (dc *ClientConfig) newGRPCClient(ctx context.Context) (*grpc.ClientConn, error) {
 	var tlsDialOption grpc.DialOption
 	if tlsConfig, err := dc.getTLSConfig(); err != nil {
 		return nil, err
@@ -119,8 +123,9 @@ func (dc *ClientConfig) GetGRPCClient(ctx context.Context) (*grpc.ClientConn, er
 	} else {
 		tlsDialOption = grpc.WithInsecure()
 	}
+	dialOptions := append([]grpc.DialOption{tlsDialOption}, dc.DialOptions...)
 
-	grpcClient, err := grpc.DialContext(ctx, dc.Address, tlsDialOption)
+	grpcClient, err := grpc.DialContext(ctx, dc.Address, dialOptions...)
 	if err != nil {
 		return nil, err
 	}

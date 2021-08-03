@@ -15,6 +15,7 @@ import (
 	"github.com/influxdata/influxdb-iox-client-go/ioxsql"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
 )
 
 func databaseAddress() string {
@@ -33,10 +34,11 @@ func openNewDatabase(t *testing.T) (*sql.DB, *influxdbiox.Client) {
 	}
 	dsn := fmt.Sprintf("%s/%s", address, database)
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Millisecond)
 	defer cancel()
 	config, err := influxdbiox.ClientConfigFromAddressString(dsn)
 	require.NoError(t, err)
+	config.DialOptions = append(config.DialOptions, grpc.WithBlock())
 	client, err := influxdbiox.NewClient(ctx, config)
 	require.NoError(t, err)
 	t.Cleanup(func() { client.Close() })
