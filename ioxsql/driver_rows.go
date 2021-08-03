@@ -1,6 +1,7 @@
 package ioxsql
 
 import (
+	"context"
 	"database/sql/driver"
 	"fmt"
 	"io"
@@ -11,11 +12,11 @@ import (
 	"github.com/apache/arrow/go/arrow"
 	"github.com/apache/arrow/go/arrow/array"
 	"github.com/apache/arrow/go/arrow/flight"
+	"github.com/influxdata/influxdbiox"
 )
 
 var (
 	_ driver.Rows                           = (*rows)(nil)
-	_ driver.RowsNextResultSet              = (*rows)(nil)
 	_ driver.RowsColumnTypeScanType         = (*rows)(nil)
 	_ driver.RowsColumnTypeDatabaseTypeName = (*rows)(nil)
 	_ driver.RowsColumnTypeLength           = (*rows)(nil)
@@ -24,48 +25,74 @@ var (
 )
 
 type rows struct {
-	flightReader *flight.Reader // multiple result sets
-	record       array.Record   // current result set
-	rowI         int            // next row index
+	flightReader *flight.Reader // stream of result sets
+	fields       []arrow.Field
+	record       array.Record // current result set
+	rowI         int          // next row index for current result set
 }
 
-func newRows(flightReader *flight.Reader) *rows {
+// queryRows constructs a new rows object by executing a query request
+func queryRows(ctx context.Context, request *influxdbiox.QueryRequest, _argsReserved []interface{}) (*rows, error) {
+	flightReader, err := request.Query(ctx) // n.b. this must be released
+	if err != nil {
+		return nil, err
+	}
+
 	return &rows{
 		flightReader: flightReader,
+		fields:       flightReader.Schema().Fields(),
+	}, nil
+}
+
+// Close ensures that releasable pointers are released and set to nil.
+func (r *rows) Close() error {
+	if r.record != nil {
+		r.record = nil
 	}
+	if r.flightReader != nil {
+		r.flightReader.Release()
+		r.flightReader = nil
+	}
+	return nil
 }
 
 func (r *rows) Columns() []string {
-	columns := make([]string, r.record.NumCols())
-	for i := int64(0); i < r.record.NumCols(); i++ {
-		columns[i] = r.record.ColumnName(int(i))
+	if r.flightReader == nil {
+		return nil
+	}
+
+	columns := make([]string, len(r.fields))
+	for i, field := range r.fields {
+		columns[i] = field.Name
 	}
 	return columns
 }
 
-func (r *rows) Close() error {
-	r.flightReader.Release()
-	return nil
-}
-
 func (r *rows) Next(dest []driver.Value) error {
-	if r.record == nil {
-		return io.EOF
-	}
-	if r.rowI >= int(r.record.NumRows()) {
-		r.record.Release()
-		r.record = nil
-		return io.EOF
+	for r.record == nil || r.rowI >= int(r.record.NumRows()) {
+		if nextRecord, err := r.flightReader.Read(); err == io.EOF {
+			r.record = nil
+			_ = r.Close()
+			return io.EOF
+		} else if err != nil {
+			_ = r.Close()
+			return err
+		} else {
+			r.record = nextRecord
+			r.rowI = 0
+		}
 	}
 
-	for i := int64(0); i < r.record.NumCols(); i++ {
-		col := r.record.Column(int(i))
+	for i := 0; i < int(r.record.NumCols()); i++ {
+		col := r.record.Column(i)
 		value, err := driverValueFromArrowColumn(col, r.rowI)
 		if err != nil {
+			_ = r.Close()
 			return err
 		}
 		dest[i] = value
 	}
+
 	r.rowI++
 	return nil
 }
@@ -94,29 +121,11 @@ func driverValueFromArrowColumn(column array.Interface, row int) (driver.Value, 
 	}
 }
 
-func (r *rows) HasNextResultSet() bool {
-	return r.flightReader.Next()
-}
-
-func (r *rows) NextResultSet() error {
-	record, err := r.flightReader.Read()
-	if err != nil {
-		return err
-	}
-	r.record = record
-	r.rowI = 0
-
-	for _, column := range r.record.Columns() {
-		column.Data()
-	}
-	return nil
-}
-
 func (r *rows) ColumnTypeScanType(index int) reflect.Type {
-	if r.record == nil || index >= int(r.record.NumCols()) {
+	if index >= len(r.fields) {
 		return nil
 	}
-	switch r.record.Column(index).DataType().ID() {
+	switch r.fields[index].Type.ID() {
 	case arrow.TIMESTAMP:
 		return reflect.TypeOf(time.Time{})
 	case arrow.FLOAT64:
@@ -137,17 +146,17 @@ func (r *rows) ColumnTypeScanType(index int) reflect.Type {
 }
 
 func (r *rows) ColumnTypeDatabaseTypeName(index int) string {
-	if r.record == nil || index >= int(r.record.NumCols()) {
+	if index >= len(r.fields) {
 		return ""
 	}
-	return r.record.Column(index).DataType().Name()
+	return r.fields[index].Type.ID().String()
 }
 
 func (r *rows) ColumnTypeLength(index int) (length int64, ok bool) {
-	if r.record == nil || index >= int(r.record.NumCols()) {
+	if index >= len(r.fields) {
 		return 0, false
 	}
-	switch r.record.Column(index).DataType().ID() {
+	switch r.fields[index].Type.ID() {
 	case arrow.TIMESTAMP, arrow.FLOAT64, arrow.UINT64, arrow.INT64, arrow.BOOL:
 		return 0, false
 	case arrow.STRING, arrow.BINARY:
@@ -158,10 +167,10 @@ func (r *rows) ColumnTypeLength(index int) (length int64, ok bool) {
 }
 
 func (r *rows) ColumnTypeNullable(index int) (nullable, ok bool) {
-	if r.record == nil || index >= len(r.record.Schema().Fields()) {
+	if index >= len(r.fields) {
 		return false, false
 	}
-	return r.record.Schema().Field(index).Nullable, true
+	return r.fields[index].Nullable, true
 }
 
 func (r *rows) ColumnTypePrecisionScale(index int) (precision, scale int64, ok bool) {

@@ -9,11 +9,11 @@ import (
 )
 
 func ExampleClient_PrepareQuery() {
-	config, err := influxdbiox.ClientConfigFromJSONString("localhost:8082")
-	client, err := influxdbiox.NewClient(context.Background(), config)
+	config, _ := influxdbiox.ClientConfigFromJSONString("localhost:8082")
+	client, _ := influxdbiox.NewClient(context.Background(), config)
 
-	req, err := client.PrepareQuery("mydb", "select count(*) from t")
-	reader, err := req.Query(context.Background())
+	req, _ := client.PrepareQuery(context.Background(), "mydb", "select count(*) from t")
+	reader, _ := req.Query(context.Background())
 	for reader.Next() {
 		record := reader.Record()
 		for i, column := range record.Columns() {
@@ -24,9 +24,11 @@ func ExampleClient_PrepareQuery() {
 				values := typedColumn.TimestampValues()
 				for _, value := range values {
 					var t time.Time = time.Unix(0, int64(value))
+					println(t.String())
 				}
 			case *array.Int64:
 				var values []int64 = typedColumn.Int64Values()
+				println(values)
 			default:
 				// Unexpected types
 			}

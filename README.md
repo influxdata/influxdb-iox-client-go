@@ -10,3 +10,16 @@ Take a look at the godoc for usage.
 ## SQL
 
 Package [`ioxsql`](ioxsql) contains an implementation of the `database/sql` driver interface.
+
+## Tests
+
+Most tests depend on a running instance of InfluxDB/IOx, and each creates its own database.
+To start an in-memory instance, from the [InfluxDB/IOx repository](https://github.com/influxdata/influxdb_iox/) root:
+```console
+$ INFLUXDB_IOX_ID=42 cargo run -- run
+```
+
+Then run the tests like any golang test:
+```console
+$ go test ./...
+```

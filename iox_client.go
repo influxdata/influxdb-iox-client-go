@@ -25,14 +25,31 @@ type Client struct {
 // ClientConfig.GRPCClient has been configured with dialer option grpc.WithBlock.
 // For use of the context.Context object in this function, see grpc.DialContext.
 func NewClient(ctx context.Context, config *ClientConfig) (*Client, error) {
-	grpcClient, err := config.GetGRPCClient(ctx)
-	if err != nil {
+	c := &Client{
+		config: config,
+	}
+	if err := c.Reconnect(ctx); err != nil {
 		return nil, err
 	}
-	return &Client{
-		config:     config,
-		grpcClient: grpcClient,
-	}, nil
+	return c, nil
+}
+
+// Reconnect closes the gRPC connection, if open, and creates a new connection.
+func (c *Client) Reconnect(ctx context.Context) error {
+	if c.grpcClient != nil {
+		_ = c.grpcClient.Close()
+	}
+
+	grpcClient, err := c.config.GetGRPCClient(ctx)
+	if err != nil {
+		return err
+	}
+	c.grpcClient = grpcClient
+	c.managementGRPCClient = management.NewManagementServiceClient(grpcClient)
+	c.flightClient = flight.NewFlightServiceClient(grpcClient)
+	c.writeGRPCClient = influxdbpbdataprotocol.NewWriteServiceClient(grpcClient)
+
+	return nil
 }
 
 // GetState gets the state of the wrapped gRPC client.

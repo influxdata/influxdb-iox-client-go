@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net"
+	"strings"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -18,6 +19,8 @@ import (
 type ClientConfig struct {
 	// Address string as host:port
 	Address string `json:"address"`
+	// Default database; optional unless using sql.Open
+	Database string `json:"database"`
 
 	// Filename containing PEM encoded certificate for root certificate authority
 	// to use when verifying server certificates.
@@ -31,9 +34,6 @@ type ClientConfig struct {
 	// unless TLSInsecureSkipVerify is true
 	TLSServerName string `json:"tls_server_name,omitempty"`
 
-	// Use this gRPC client, instead of allowing this library to generate one.
-	// If this field is set, then fields Address and TLSConfig are ignored.
-	GRPCClient *grpc.ClientConn `json:"-"`
 	// Use this TLS config, instead of allowing this library to generate one
 	// from fields named with prefix "TLS".
 	TLSConfig *tls.Config `json:"-"`
@@ -83,23 +83,34 @@ func ClientConfigFromJSONString(s string) (*ClientConfig, error) {
 //  localhost:8082
 // Example, IPv6:
 //  [::1]:8082
+//
+// To specify a default database, as required by ioxsql (the database/sql driver),
+// append a slash to the address.
+//
+// Example:
+//  localhost:8082/mydb
 func ClientConfigFromAddressString(s string) (*ClientConfig, error) {
-	_, _, err := net.SplitHostPort(s)
+	var address, database string
+	if index := strings.IndexRune(s, '/'); index >= 0 {
+		address = s[:index]
+		database = s[index+1:]
+	} else {
+		address = s
+	}
+
+	_, _, err := net.SplitHostPort(address)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse client config from address string: %w", err)
 	}
 	return &ClientConfig{
-		Address: s,
+		Address:  address,
+		Database: database,
 	}, nil
 }
 
 // GetGRPCClient returns a *grpc.ClientConn based on the config, or returns
 // the instance already set as ClientConfig.GRPCClient.
 func (dc *ClientConfig) GetGRPCClient(ctx context.Context) (*grpc.ClientConn, error) {
-	if dc.GRPCClient != nil {
-		return dc.GRPCClient, nil
-	}
-
 	var tlsDialOption grpc.DialOption
 	if tlsConfig, err := dc.getTLSConfig(); err != nil {
 		return nil, err
@@ -113,7 +124,6 @@ func (dc *ClientConfig) GetGRPCClient(ctx context.Context) (*grpc.ClientConn, er
 	if err != nil {
 		return nil, err
 	}
-	dc.GRPCClient = grpcClient
 
 	return grpcClient, nil
 }

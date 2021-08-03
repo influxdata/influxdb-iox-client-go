@@ -42,7 +42,12 @@ type ticketReadInfo struct {
 }
 
 // PrepareQuery prepares a query request.
-func (c *Client) PrepareQuery(database, query string) (*QueryRequest, error) {
+//
+// If database is "" then the configured default is used.
+func (c *Client) PrepareQuery(ctx context.Context, database, query string) (*QueryRequest, error) {
+	if database == "" {
+		database = c.config.Database
+	}
 	return newRequest(c, database, query), nil
 }
 
@@ -96,7 +101,7 @@ func (r *QueryRequest) Query(ctx context.Context, args ...interface{}) (*flight.
 	}
 	flightReader, err := flight.NewRecordReader(doGetClient)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create Flight record reader: %w", err)
 	}
 	return flightReader, nil
 }

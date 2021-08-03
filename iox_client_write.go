@@ -8,10 +8,19 @@ import (
 	"google.golang.org/grpc"
 )
 
+// NewWriteBatch constructs a new WriteBatch.
+//
+// If database is "" then the configured default is used.
 func (c *Client) NewWriteBatch(database string) (*WriteBatch, error) {
+	if database == "" {
+		database = c.config.Database
+	}
 	return newWriteBatch(c, database), nil
 }
 
+// WriteBatch wraps ipdpsugar.DatabaseBatch.
+//
+// When the batch is complete, call the Write method to persist the batch.
 type WriteBatch struct {
 	client *Client
 	*ipdpsugar.DatabaseBatch
@@ -25,6 +34,8 @@ func newWriteBatch(client *Client, database string) *WriteBatch {
 	}
 }
 
+// WithCallOption adds a grpc.CallOption to this WriteBatch, which will
+// be used when the Write method is called.
 func (b *WriteBatch) WithCallOption(grpcCallOption grpc.CallOption) *WriteBatch {
 	return &WriteBatch{
 		client:          b.client,
@@ -33,6 +44,7 @@ func (b *WriteBatch) WithCallOption(grpcCallOption grpc.CallOption) *WriteBatch 
 	}
 }
 
+// Write writes this WriteBatch to the database.
 func (b *WriteBatch) Write(ctx context.Context) error {
 	pb, err := b.ToProto()
 	if err != nil {

@@ -5,10 +5,13 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"errors"
+	"strings"
 
 	"github.com/influxdata/influxdbiox"
 	"google.golang.org/grpc/connectivity"
 )
+
+const DriverName = "influxdb-iox"
 
 var (
 	_ driver.Driver        = (*Driver)(nil)
@@ -16,8 +19,13 @@ var (
 )
 
 func init() {
-	sql.Register("influxdb-iox", thisDriver)
+	sql.Register(DriverName, thisDriver)
 }
+
+var (
+	_ driver.Driver        = (*Driver)(nil)
+	_ driver.DriverContext = (*Driver)(nil)
+)
 
 type Driver struct{}
 
@@ -32,7 +40,13 @@ func (d *Driver) Open(dataSourceName string) (driver.Conn, error) {
 }
 
 func (_ *Driver) OpenConnector(dataSourceName string) (driver.Connector, error) {
-	config, err := influxdbiox.ClientConfigFromJSONString(dataSourceName)
+	var config *influxdbiox.ClientConfig
+	var err error
+	if s := strings.TrimSpace(dataSourceName); len(s) > 0 && s[0] == '{' {
+		config, err = influxdbiox.ClientConfigFromJSONString(dataSourceName)
+	} else {
+		config, err = influxdbiox.ClientConfigFromAddressString(dataSourceName)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -65,10 +79,11 @@ func (c *Connector) Driver() driver.Driver {
 }
 
 var (
-	_ driver.Conn            = (*Connection)(nil)
-	_ driver.Pinger          = (*Connection)(nil)
-	_ driver.SessionResetter = (*Connection)(nil)
-	_ driver.Validator       = (*Connection)(nil)
+	_ driver.Conn               = (*Connection)(nil)
+	_ driver.Pinger             = (*Connection)(nil)
+	_ driver.SessionResetter    = (*Connection)(nil)
+	_ driver.Validator          = (*Connection)(nil)
+	_ driver.ConnPrepareContext = (*Connection)(nil)
 )
 
 type Connection struct {
@@ -94,12 +109,16 @@ func (c *Connection) Client() *influxdbiox.Client {
 	return c.client
 }
 
-func (c *Connection) Prepare(query string) (driver.Stmt, error) {
-	request, err := c.client.Prepare(query)
+func (c *Connection) PrepareContext(ctx context.Context, query string) (driver.Stmt, error) {
+	request, err := c.client.PrepareQuery(ctx, "", query)
 	if err != nil {
 		return nil, err
 	}
 	return newStatement(request), nil
+}
+
+func (c *Connection) Prepare(query string) (driver.Stmt, error) {
+	return c.PrepareContext(context.Background(), query)
 }
 
 func (c *Connection) Close() error {
@@ -111,14 +130,17 @@ func (c *Connection) Begin() (driver.Tx, error) {
 }
 
 func (c *Connection) Ping(ctx context.Context) error {
-	return c.client.Ping(ctx)
+	return c.client.Handshake(ctx)
 }
 
-func (c *Connection) ResetSession(_ context.Context) error {
+func (c *Connection) ResetSession(ctx context.Context) error {
 	if c.IsValid() {
 		return nil
 	}
-	return driver.ErrBadConn
+	if err := c.client.Reconnect(ctx); err != nil {
+		return driver.ErrBadConn
+	}
+	return nil
 }
 
 func (c *Connection) IsValid() bool {

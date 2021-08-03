@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql/driver"
 	"errors"
-	"io"
 
 	"github.com/influxdata/influxdbiox"
 )
@@ -45,28 +44,12 @@ func (s *statement) Query(args []driver.Value) (driver.Rows, error) {
 	if len(args) > 0 {
 		return nil, errors.New("query args not supported")
 	}
-	flightReader, err := s.request.Query(context.Background())
-	if err != nil {
-		return nil, err
-	}
-	r := newRows(flightReader)
-	if err := r.NextResultSet(); err != nil && err != io.EOF {
-		return nil, err
-	}
-	return r, nil
+	return queryRows(context.Background(), s.request, nil)
 }
 
 func (s *statement) QueryContext(ctx context.Context, args []driver.NamedValue) (driver.Rows, error) {
 	if len(args) > 0 {
 		return nil, errors.New("query args not supported")
 	}
-	flightReader, err := s.request.Query(ctx)
-	if err != nil {
-		return nil, err
-	}
-	r := newRows(flightReader)
-	if err := r.NextResultSet(); err != nil && err != io.EOF {
-		return nil, err
-	}
-	return r, nil
+	return queryRows(ctx, s.request, nil)
 }
