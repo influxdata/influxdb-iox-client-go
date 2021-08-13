@@ -34,7 +34,7 @@ func openNewDatabase(t *testing.T) (*sql.DB, *influxdbiox.Client) {
 	}
 	dsn := fmt.Sprintf("%s/%s", address, database)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 	config, err := influxdbiox.ClientConfigFromAddressString(dsn)
 	require.NoError(t, err)
