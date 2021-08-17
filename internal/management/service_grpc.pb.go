@@ -55,6 +55,10 @@ type ManagementServiceClient interface {
 	GetServerStatus(ctx context.Context, in *GetServerStatusRequest, opts ...grpc.CallOption) (*GetServerStatusResponse, error)
 	// Wipe preserved catalog for given DB.
 	WipePreservedCatalog(ctx context.Context, in *WipePreservedCatalogRequest, opts ...grpc.CallOption) (*WipePreservedCatalogResponse, error)
+	// Skip replay for given DB.
+	SkipReplay(ctx context.Context, in *SkipReplayRequest, opts ...grpc.CallOption) (*SkipReplayResponse, error)
+	// Drop partition from memory and (if persisted) from object store.
+	DropPartition(ctx context.Context, in *DropPartitionRequest, opts ...grpc.CallOption) (*DropPartitionResponse, error)
 }
 
 type managementServiceClient struct {
@@ -245,6 +249,24 @@ func (c *managementServiceClient) WipePreservedCatalog(ctx context.Context, in *
 	return out, nil
 }
 
+func (c *managementServiceClient) SkipReplay(ctx context.Context, in *SkipReplayRequest, opts ...grpc.CallOption) (*SkipReplayResponse, error) {
+	out := new(SkipReplayResponse)
+	err := c.cc.Invoke(ctx, "/influxdata.iox.management.v1.ManagementService/SkipReplay", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *managementServiceClient) DropPartition(ctx context.Context, in *DropPartitionRequest, opts ...grpc.CallOption) (*DropPartitionResponse, error) {
+	out := new(DropPartitionResponse)
+	err := c.cc.Invoke(ctx, "/influxdata.iox.management.v1.ManagementService/DropPartition", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ManagementServiceServer is the server API for ManagementService service.
 // All implementations must embed UnimplementedManagementServiceServer
 // for forward compatibility
@@ -286,6 +308,10 @@ type ManagementServiceServer interface {
 	GetServerStatus(context.Context, *GetServerStatusRequest) (*GetServerStatusResponse, error)
 	// Wipe preserved catalog for given DB.
 	WipePreservedCatalog(context.Context, *WipePreservedCatalogRequest) (*WipePreservedCatalogResponse, error)
+	// Skip replay for given DB.
+	SkipReplay(context.Context, *SkipReplayRequest) (*SkipReplayResponse, error)
+	// Drop partition from memory and (if persisted) from object store.
+	DropPartition(context.Context, *DropPartitionRequest) (*DropPartitionResponse, error)
 	mustEmbedUnimplementedManagementServiceServer()
 }
 
@@ -352,6 +378,12 @@ func (UnimplementedManagementServiceServer) GetServerStatus(context.Context, *Ge
 }
 func (UnimplementedManagementServiceServer) WipePreservedCatalog(context.Context, *WipePreservedCatalogRequest) (*WipePreservedCatalogResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method WipePreservedCatalog not implemented")
+}
+func (UnimplementedManagementServiceServer) SkipReplay(context.Context, *SkipReplayRequest) (*SkipReplayResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SkipReplay not implemented")
+}
+func (UnimplementedManagementServiceServer) DropPartition(context.Context, *DropPartitionRequest) (*DropPartitionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DropPartition not implemented")
 }
 func (UnimplementedManagementServiceServer) mustEmbedUnimplementedManagementServiceServer() {}
 
@@ -726,6 +758,42 @@ func _ManagementService_WipePreservedCatalog_Handler(srv interface{}, ctx contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ManagementService_SkipReplay_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SkipReplayRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ManagementServiceServer).SkipReplay(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/influxdata.iox.management.v1.ManagementService/SkipReplay",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ManagementServiceServer).SkipReplay(ctx, req.(*SkipReplayRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ManagementService_DropPartition_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DropPartitionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ManagementServiceServer).DropPartition(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/influxdata.iox.management.v1.ManagementService/DropPartition",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ManagementServiceServer).DropPartition(ctx, req.(*DropPartitionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ManagementService_ServiceDesc is the grpc.ServiceDesc for ManagementService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -812,6 +880,14 @@ var ManagementService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "WipePreservedCatalog",
 			Handler:    _ManagementService_WipePreservedCatalog_Handler,
+		},
+		{
+			MethodName: "SkipReplay",
+			Handler:    _ManagementService_SkipReplay_Handler,
+		},
+		{
+			MethodName: "DropPartition",
+			Handler:    _ManagementService_DropPartition_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
