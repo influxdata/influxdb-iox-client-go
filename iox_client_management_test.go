@@ -7,14 +7,14 @@ import (
 )
 
 func ExampleClient_CreateDatabase() {
-	config, _ := influxdbiox.ClientConfigFromJSONString("localhost:8082")
+	config, _ := influxdbiox.ClientConfigFromAddressString("localhost:8082")
 	client, _ := influxdbiox.NewClient(context.Background(), config)
 
 	_ = client.CreateDatabase(context.Background(), "mydb")
 }
 
 func ExampleClient_ListDatabases() {
-	config, _ := influxdbiox.ClientConfigFromJSONString("localhost:8082")
+	config, _ := influxdbiox.ClientConfigFromAddressString("localhost:8082")
 	client, _ := influxdbiox.NewClient(context.Background(), config)
 
 	databases, _ := client.ListDatabases(context.Background())

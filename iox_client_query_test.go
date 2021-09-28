@@ -9,7 +9,7 @@ import (
 )
 
 func ExampleClient_PrepareQuery() {
-	config, _ := influxdbiox.ClientConfigFromJSONString("localhost:8082")
+	config, _ := influxdbiox.ClientConfigFromAddressString("localhost:8082")
 	client, _ := influxdbiox.NewClient(context.Background(), config)
 
 	req, _ := client.PrepareQuery(context.Background(), "mydb", "select count(*) from t")
