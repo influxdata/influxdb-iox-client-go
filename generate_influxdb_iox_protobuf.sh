@@ -2,6 +2,11 @@
 
 set -e
 
+# If either of the commands fail below, run the following and then retry:
+#
+# go get google.golang.org/protobuf/cmd/protoc-gen-go@v1.26
+# go get google.golang.org/grpc/cmd/protoc-gen-go-grpc@1.39.0
+
 if [ -z "$(which protoc-gen-go)" ]; then
   echo "installing protoc-gen-go"
   go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.26

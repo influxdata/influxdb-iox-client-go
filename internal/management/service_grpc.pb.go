@@ -21,13 +21,26 @@ type ManagementServiceClient interface {
 	GetServerId(ctx context.Context, in *GetServerIdRequest, opts ...grpc.CallOption) (*GetServerIdResponse, error)
 	UpdateServerId(ctx context.Context, in *UpdateServerIdRequest, opts ...grpc.CallOption) (*UpdateServerIdResponse, error)
 	SetServingReadiness(ctx context.Context, in *SetServingReadinessRequest, opts ...grpc.CallOption) (*SetServingReadinessResponse, error)
+	// List all databases on this server.
+	//
+	// Roughly follows the <https://google.aip.dev/132> pattern, except we wrap the response
 	ListDatabases(ctx context.Context, in *ListDatabasesRequest, opts ...grpc.CallOption) (*ListDatabasesResponse, error)
+	// Return a specific database by name
+	//
+	// Roughly follows the <https://google.aip.dev/131> pattern, except
+	// we wrap the response
 	GetDatabase(ctx context.Context, in *GetDatabaseRequest, opts ...grpc.CallOption) (*GetDatabaseResponse, error)
 	CreateDatabase(ctx context.Context, in *CreateDatabaseRequest, opts ...grpc.CallOption) (*CreateDatabaseResponse, error)
 	// Update a database.
 	//
 	// Roughly follows the <https://google.aip.dev/134> pattern, except we wrap the response
 	UpdateDatabase(ctx context.Context, in *UpdateDatabaseRequest, opts ...grpc.CallOption) (*UpdateDatabaseResponse, error)
+	DeleteDatabase(ctx context.Context, in *DeleteDatabaseRequest, opts ...grpc.CallOption) (*DeleteDatabaseResponse, error)
+	RestoreDatabase(ctx context.Context, in *RestoreDatabaseRequest, opts ...grpc.CallOption) (*RestoreDatabaseResponse, error)
+	// List deleted databases and their metadata.
+	ListDeletedDatabases(ctx context.Context, in *ListDeletedDatabasesRequest, opts ...grpc.CallOption) (*ListDeletedDatabasesResponse, error)
+	// List all databases and their metadata.
+	ListDetailedDatabases(ctx context.Context, in *ListDetailedDatabasesRequest, opts ...grpc.CallOption) (*ListDetailedDatabasesResponse, error)
 	// List chunks available on this database
 	ListChunks(ctx context.Context, in *ListChunksRequest, opts ...grpc.CallOption) (*ListChunksResponse, error)
 	// List remote IOx servers we know about.
@@ -57,8 +70,15 @@ type ManagementServiceClient interface {
 	WipePreservedCatalog(ctx context.Context, in *WipePreservedCatalogRequest, opts ...grpc.CallOption) (*WipePreservedCatalogResponse, error)
 	// Skip replay for given DB.
 	SkipReplay(ctx context.Context, in *SkipReplayRequest, opts ...grpc.CallOption) (*SkipReplayResponse, error)
+	// Persist given partition.
+	//
+	// Errors if there is nothing to persist at the moment as per the lifecycle rules. If successful it returns the
+	// chunk that contains the persisted data.
+	PersistPartition(ctx context.Context, in *PersistPartitionRequest, opts ...grpc.CallOption) (*PersistPartitionResponse, error)
 	// Drop partition from memory and (if persisted) from object store.
 	DropPartition(ctx context.Context, in *DropPartitionRequest, opts ...grpc.CallOption) (*DropPartitionResponse, error)
+	// Delete data for a table on a specified predicate
+	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
 }
 
 type managementServiceClient struct {
@@ -126,6 +146,42 @@ func (c *managementServiceClient) CreateDatabase(ctx context.Context, in *Create
 func (c *managementServiceClient) UpdateDatabase(ctx context.Context, in *UpdateDatabaseRequest, opts ...grpc.CallOption) (*UpdateDatabaseResponse, error) {
 	out := new(UpdateDatabaseResponse)
 	err := c.cc.Invoke(ctx, "/influxdata.iox.management.v1.ManagementService/UpdateDatabase", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *managementServiceClient) DeleteDatabase(ctx context.Context, in *DeleteDatabaseRequest, opts ...grpc.CallOption) (*DeleteDatabaseResponse, error) {
+	out := new(DeleteDatabaseResponse)
+	err := c.cc.Invoke(ctx, "/influxdata.iox.management.v1.ManagementService/DeleteDatabase", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *managementServiceClient) RestoreDatabase(ctx context.Context, in *RestoreDatabaseRequest, opts ...grpc.CallOption) (*RestoreDatabaseResponse, error) {
+	out := new(RestoreDatabaseResponse)
+	err := c.cc.Invoke(ctx, "/influxdata.iox.management.v1.ManagementService/RestoreDatabase", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *managementServiceClient) ListDeletedDatabases(ctx context.Context, in *ListDeletedDatabasesRequest, opts ...grpc.CallOption) (*ListDeletedDatabasesResponse, error) {
+	out := new(ListDeletedDatabasesResponse)
+	err := c.cc.Invoke(ctx, "/influxdata.iox.management.v1.ManagementService/ListDeletedDatabases", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *managementServiceClient) ListDetailedDatabases(ctx context.Context, in *ListDetailedDatabasesRequest, opts ...grpc.CallOption) (*ListDetailedDatabasesResponse, error) {
+	out := new(ListDetailedDatabasesResponse)
+	err := c.cc.Invoke(ctx, "/influxdata.iox.management.v1.ManagementService/ListDetailedDatabases", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -258,9 +314,27 @@ func (c *managementServiceClient) SkipReplay(ctx context.Context, in *SkipReplay
 	return out, nil
 }
 
+func (c *managementServiceClient) PersistPartition(ctx context.Context, in *PersistPartitionRequest, opts ...grpc.CallOption) (*PersistPartitionResponse, error) {
+	out := new(PersistPartitionResponse)
+	err := c.cc.Invoke(ctx, "/influxdata.iox.management.v1.ManagementService/PersistPartition", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *managementServiceClient) DropPartition(ctx context.Context, in *DropPartitionRequest, opts ...grpc.CallOption) (*DropPartitionResponse, error) {
 	out := new(DropPartitionResponse)
 	err := c.cc.Invoke(ctx, "/influxdata.iox.management.v1.ManagementService/DropPartition", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *managementServiceClient) Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error) {
+	out := new(DeleteResponse)
+	err := c.cc.Invoke(ctx, "/influxdata.iox.management.v1.ManagementService/Delete", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -274,13 +348,26 @@ type ManagementServiceServer interface {
 	GetServerId(context.Context, *GetServerIdRequest) (*GetServerIdResponse, error)
 	UpdateServerId(context.Context, *UpdateServerIdRequest) (*UpdateServerIdResponse, error)
 	SetServingReadiness(context.Context, *SetServingReadinessRequest) (*SetServingReadinessResponse, error)
+	// List all databases on this server.
+	//
+	// Roughly follows the <https://google.aip.dev/132> pattern, except we wrap the response
 	ListDatabases(context.Context, *ListDatabasesRequest) (*ListDatabasesResponse, error)
+	// Return a specific database by name
+	//
+	// Roughly follows the <https://google.aip.dev/131> pattern, except
+	// we wrap the response
 	GetDatabase(context.Context, *GetDatabaseRequest) (*GetDatabaseResponse, error)
 	CreateDatabase(context.Context, *CreateDatabaseRequest) (*CreateDatabaseResponse, error)
 	// Update a database.
 	//
 	// Roughly follows the <https://google.aip.dev/134> pattern, except we wrap the response
 	UpdateDatabase(context.Context, *UpdateDatabaseRequest) (*UpdateDatabaseResponse, error)
+	DeleteDatabase(context.Context, *DeleteDatabaseRequest) (*DeleteDatabaseResponse, error)
+	RestoreDatabase(context.Context, *RestoreDatabaseRequest) (*RestoreDatabaseResponse, error)
+	// List deleted databases and their metadata.
+	ListDeletedDatabases(context.Context, *ListDeletedDatabasesRequest) (*ListDeletedDatabasesResponse, error)
+	// List all databases and their metadata.
+	ListDetailedDatabases(context.Context, *ListDetailedDatabasesRequest) (*ListDetailedDatabasesResponse, error)
 	// List chunks available on this database
 	ListChunks(context.Context, *ListChunksRequest) (*ListChunksResponse, error)
 	// List remote IOx servers we know about.
@@ -310,8 +397,15 @@ type ManagementServiceServer interface {
 	WipePreservedCatalog(context.Context, *WipePreservedCatalogRequest) (*WipePreservedCatalogResponse, error)
 	// Skip replay for given DB.
 	SkipReplay(context.Context, *SkipReplayRequest) (*SkipReplayResponse, error)
+	// Persist given partition.
+	//
+	// Errors if there is nothing to persist at the moment as per the lifecycle rules. If successful it returns the
+	// chunk that contains the persisted data.
+	PersistPartition(context.Context, *PersistPartitionRequest) (*PersistPartitionResponse, error)
 	// Drop partition from memory and (if persisted) from object store.
 	DropPartition(context.Context, *DropPartitionRequest) (*DropPartitionResponse, error)
+	// Delete data for a table on a specified predicate
+	Delete(context.Context, *DeleteRequest) (*DeleteResponse, error)
 	mustEmbedUnimplementedManagementServiceServer()
 }
 
@@ -339,6 +433,18 @@ func (UnimplementedManagementServiceServer) CreateDatabase(context.Context, *Cre
 }
 func (UnimplementedManagementServiceServer) UpdateDatabase(context.Context, *UpdateDatabaseRequest) (*UpdateDatabaseResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateDatabase not implemented")
+}
+func (UnimplementedManagementServiceServer) DeleteDatabase(context.Context, *DeleteDatabaseRequest) (*DeleteDatabaseResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteDatabase not implemented")
+}
+func (UnimplementedManagementServiceServer) RestoreDatabase(context.Context, *RestoreDatabaseRequest) (*RestoreDatabaseResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RestoreDatabase not implemented")
+}
+func (UnimplementedManagementServiceServer) ListDeletedDatabases(context.Context, *ListDeletedDatabasesRequest) (*ListDeletedDatabasesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListDeletedDatabases not implemented")
+}
+func (UnimplementedManagementServiceServer) ListDetailedDatabases(context.Context, *ListDetailedDatabasesRequest) (*ListDetailedDatabasesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListDetailedDatabases not implemented")
 }
 func (UnimplementedManagementServiceServer) ListChunks(context.Context, *ListChunksRequest) (*ListChunksResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListChunks not implemented")
@@ -382,8 +488,14 @@ func (UnimplementedManagementServiceServer) WipePreservedCatalog(context.Context
 func (UnimplementedManagementServiceServer) SkipReplay(context.Context, *SkipReplayRequest) (*SkipReplayResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SkipReplay not implemented")
 }
+func (UnimplementedManagementServiceServer) PersistPartition(context.Context, *PersistPartitionRequest) (*PersistPartitionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PersistPartition not implemented")
+}
 func (UnimplementedManagementServiceServer) DropPartition(context.Context, *DropPartitionRequest) (*DropPartitionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DropPartition not implemented")
+}
+func (UnimplementedManagementServiceServer) Delete(context.Context, *DeleteRequest) (*DeleteResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
 }
 func (UnimplementedManagementServiceServer) mustEmbedUnimplementedManagementServiceServer() {}
 
@@ -520,6 +632,78 @@ func _ManagementService_UpdateDatabase_Handler(srv interface{}, ctx context.Cont
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ManagementServiceServer).UpdateDatabase(ctx, req.(*UpdateDatabaseRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ManagementService_DeleteDatabase_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteDatabaseRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ManagementServiceServer).DeleteDatabase(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/influxdata.iox.management.v1.ManagementService/DeleteDatabase",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ManagementServiceServer).DeleteDatabase(ctx, req.(*DeleteDatabaseRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ManagementService_RestoreDatabase_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RestoreDatabaseRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ManagementServiceServer).RestoreDatabase(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/influxdata.iox.management.v1.ManagementService/RestoreDatabase",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ManagementServiceServer).RestoreDatabase(ctx, req.(*RestoreDatabaseRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ManagementService_ListDeletedDatabases_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListDeletedDatabasesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ManagementServiceServer).ListDeletedDatabases(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/influxdata.iox.management.v1.ManagementService/ListDeletedDatabases",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ManagementServiceServer).ListDeletedDatabases(ctx, req.(*ListDeletedDatabasesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ManagementService_ListDetailedDatabases_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListDetailedDatabasesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ManagementServiceServer).ListDetailedDatabases(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/influxdata.iox.management.v1.ManagementService/ListDetailedDatabases",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ManagementServiceServer).ListDetailedDatabases(ctx, req.(*ListDetailedDatabasesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -776,6 +960,24 @@ func _ManagementService_SkipReplay_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ManagementService_PersistPartition_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PersistPartitionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ManagementServiceServer).PersistPartition(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/influxdata.iox.management.v1.ManagementService/PersistPartition",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ManagementServiceServer).PersistPartition(ctx, req.(*PersistPartitionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _ManagementService_DropPartition_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DropPartitionRequest)
 	if err := dec(in); err != nil {
@@ -790,6 +992,24 @@ func _ManagementService_DropPartition_Handler(srv interface{}, ctx context.Conte
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ManagementServiceServer).DropPartition(ctx, req.(*DropPartitionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ManagementService_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ManagementServiceServer).Delete(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/influxdata.iox.management.v1.ManagementService/Delete",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ManagementServiceServer).Delete(ctx, req.(*DeleteRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -828,6 +1048,22 @@ var ManagementService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateDatabase",
 			Handler:    _ManagementService_UpdateDatabase_Handler,
+		},
+		{
+			MethodName: "DeleteDatabase",
+			Handler:    _ManagementService_DeleteDatabase_Handler,
+		},
+		{
+			MethodName: "RestoreDatabase",
+			Handler:    _ManagementService_RestoreDatabase_Handler,
+		},
+		{
+			MethodName: "ListDeletedDatabases",
+			Handler:    _ManagementService_ListDeletedDatabases_Handler,
+		},
+		{
+			MethodName: "ListDetailedDatabases",
+			Handler:    _ManagementService_ListDetailedDatabases_Handler,
 		},
 		{
 			MethodName: "ListChunks",
@@ -886,8 +1122,16 @@ var ManagementService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _ManagementService_SkipReplay_Handler,
 		},
 		{
+			MethodName: "PersistPartition",
+			Handler:    _ManagementService_PersistPartition_Handler,
+		},
+		{
 			MethodName: "DropPartition",
 			Handler:    _ManagementService_DropPartition_Handler,
+		},
+		{
+			MethodName: "Delete",
+			Handler:    _ManagementService_Delete_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
