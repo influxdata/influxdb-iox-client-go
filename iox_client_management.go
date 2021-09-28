@@ -2,6 +2,7 @@ package influxdbiox
 
 import (
 	"context"
+	"time"
 
 	management "github.com/influxdata/influxdb-iox-client-go/internal/management"
 )
@@ -43,4 +44,18 @@ func (c *Client) GetServerStatus(ctx context.Context) (string, error) {
 		return "ok", nil
 	}
 	return "?", nil
+}
+
+func (c *Client) Delete(ctx context.Context, databaseName, tableName string, startTime, stopTime time.Time, predicate string) error {
+	_, err := c.managementGRPCClient.Delete(ctx, &management.DeleteRequest{
+		DbName:    databaseName,
+		TableName: tableName,
+		StartTime: startTime.UTC().Format(time.RFC3339),
+		StopTime:  stopTime.UTC().Format(time.RFC3339),
+		Predicate: predicate,
+	})
+	if err != nil {
+		return err
+	}
+	return nil
 }
