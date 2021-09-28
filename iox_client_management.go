@@ -11,7 +11,11 @@ func (c *Client) ListDatabases(ctx context.Context) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	return response.Names, nil
+	var names []string
+	for _, rules := range response.Rules {
+		names = append(names, rules.Name)
+	}
+	return names, nil
 }
 
 func (c *Client) CreateDatabase(ctx context.Context, databaseName string) error {
