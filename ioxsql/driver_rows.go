@@ -12,7 +12,7 @@ import (
 	"github.com/apache/arrow/go/arrow"
 	"github.com/apache/arrow/go/arrow/array"
 	"github.com/apache/arrow/go/arrow/flight"
-	"github.com/influxdata/influxdb-iox-client-go"
+	influxdbiox "github.com/influxdata/influxdb-iox-client-go"
 )
 
 var (
@@ -128,7 +128,9 @@ func (r *rows) ColumnTypeScanType(index int) reflect.Type {
 	switch r.fields[index].Type.ID() {
 	case arrow.TIMESTAMP:
 		return reflect.TypeOf(time.Time{})
-	case arrow.FLOAT64:
+	case arrow.FLOAT32:
+		return reflect.TypeOf(float32(0))
+	case arrow.DECIMAL, arrow.FLOAT64:
 		return reflect.TypeOf(float64(0))
 	case arrow.UINT64:
 		return reflect.TypeOf(uint64(0))
