@@ -9,6 +9,8 @@ import (
 	"math/rand"
 
 	"github.com/apache/arrow/go/arrow/flight"
+	"github.com/apache/arrow/go/arrow/ipc"
+	"github.com/apache/arrow/go/arrow/memory"
 	"google.golang.org/grpc"
 )
 
@@ -57,6 +59,7 @@ type QueryRequest struct {
 	database        string
 	query           string
 	grpcCallOptions []grpc.CallOption
+	allocator       memory.Allocator
 }
 
 func newRequest(client *Client, database, query string) *QueryRequest {
@@ -75,6 +78,19 @@ func (r *QueryRequest) WithCallOption(grpcCallOption grpc.CallOption) *QueryRequ
 		database:        r.database,
 		query:           r.query,
 		grpcCallOptions: append(r.grpcCallOptions, grpcCallOption),
+		allocator:       r.allocator,
+	}
+}
+
+// WithAllocator provides an Arrow allocator the that flight.Reader will use to
+// account for memory allocated for record batches pulled off the wire.
+func (r *QueryRequest) WithAllocator(alloc memory.Allocator) *QueryRequest {
+	return &QueryRequest{
+		client:          r.client,
+		database:        r.database,
+		query:           r.query,
+		grpcCallOptions: r.grpcCallOptions,
+		allocator:       alloc,
 	}
 }
 
@@ -99,7 +115,7 @@ func (r *QueryRequest) Query(ctx context.Context, args ...interface{}) (*flight.
 	if err != nil {
 		return nil, fmt.Errorf("Arrow Flight DoGet request failed: %w", err)
 	}
-	flightReader, err := flight.NewRecordReader(doGetClient)
+	flightReader, err := flight.NewRecordReader(doGetClient, ipc.WithAllocator(r.allocator))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Flight record reader: %w", err)
 	}
