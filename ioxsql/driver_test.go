@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/apache/arrow/go/arrow"
-	"github.com/influxdata/influxdb-iox-client-go"
+	influxdbiox "github.com/influxdata/influxdb-iox-client-go"
 	"github.com/influxdata/influxdb-iox-client-go/ioxsql"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -245,11 +245,11 @@ func TestConnQueryFailure(t *testing.T) {
 func TestConnQueryRowUnsupportedType(t *testing.T) {
 	db, _ := openNewDatabase(t)
 
-	query := "select 1::decimal"
+	query := "select 1::UUID"
 
 	row := db.QueryRow(query)
 	if assert.Error(t, row.Err()) {
-		assert.Contains(t, row.Err().Error(), "Unsupported SQL type Decimal")
+		assert.Contains(t, row.Err().Error(), "Unsupported SQL type Uuid")
 	}
 }
 
@@ -395,7 +395,7 @@ func TestRowsColumnTypes(t *testing.T) {
 			ScanType: reflect.TypeOf(""),
 		}, {
 			Name:     "dec",
-			TypeName: arrow.FLOAT64.String(),
+			TypeName: arrow.DECIMAL.String(),
 			Length: struct {
 				Len int64
 				OK  bool
@@ -418,7 +418,7 @@ func TestRowsColumnTypes(t *testing.T) {
 		},
 	}
 
-	rows, err := db.Query("SELECT 1::bigint AS a, varchar 'bar' AS bar, 1.28::float AS dec, '12:00:00'::timestamp as d")
+	rows, err := db.Query("SELECT 1::bigint AS a, varchar 'bar' AS bar, 1.28::DECIMAL(10,0) AS dec, '2004-10-19 10:23:54'::timestamp as d")
 	require.NoError(t, err)
 
 	columns, err := rows.ColumnTypes()
