@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/apache/arrow/go/arrow/array"
+	"github.com/apache/arrow/go/arrow/memory"
 	"github.com/influxdata/influxdb-iox-client-go"
 	"github.com/stretchr/testify/require"
 )
@@ -66,6 +67,7 @@ func TestClient(t *testing.T) {
 
 	req, err := client.PrepareQuery(ctx, "", "select count(*) from t;")
 	require.NoError(t, err)
+	req = req.WithAllocator(memory.DefaultAllocator)
 
 	reader, err := req.Query(ctx)
 	require.NoError(t, err)
