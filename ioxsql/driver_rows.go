@@ -9,9 +9,9 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/apache/arrow/go/arrow"
-	"github.com/apache/arrow/go/arrow/array"
-	"github.com/apache/arrow/go/arrow/flight"
+	"github.com/apache/arrow/go/v7/arrow"
+	"github.com/apache/arrow/go/v7/arrow/array"
+	"github.com/apache/arrow/go/v7/arrow/flight"
 	influxdbiox "github.com/influxdata/influxdb-iox-client-go"
 )
 
@@ -27,7 +27,7 @@ var (
 type rows struct {
 	flightReader *flight.Reader // stream of result sets
 	fields       []arrow.Field
-	record       array.Record // current result set
+	record       arrow.Record // current result set
 	rowI         int          // next row index for current result set
 }
 
@@ -97,7 +97,7 @@ func (r *rows) Next(dest []driver.Value) error {
 	return nil
 }
 
-func driverValueFromArrowColumn(column array.Interface, row int) (driver.Value, error) {
+func driverValueFromArrowColumn(column arrow.Array, row int) (driver.Value, error) {
 	if column.IsNull(row) {
 		return nil, nil
 	}

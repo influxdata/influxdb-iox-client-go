@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/apache/arrow/go/arrow/array"
-	"github.com/apache/arrow/go/arrow/memory"
-	"github.com/influxdata/influxdb-iox-client-go"
+	"github.com/apache/arrow/go/v7/arrow/array"
+	"github.com/apache/arrow/go/v7/arrow/memory"
+	influxdbiox "github.com/influxdata/influxdb-iox-client-go"
 	"github.com/stretchr/testify/require"
 )
 
