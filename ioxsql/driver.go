@@ -39,7 +39,7 @@ func (d *Driver) Open(dataSourceName string) (driver.Conn, error) {
 	return connector.Connect(context.Background())
 }
 
-func (_ *Driver) OpenConnector(dataSourceName string) (driver.Connector, error) {
+func (*Driver) OpenConnector(dataSourceName string) (driver.Connector, error) {
 	var config *influxdbiox.ClientConfig
 	var err error
 	if s := strings.TrimSpace(dataSourceName); len(s) > 0 && s[0] == '{' {
