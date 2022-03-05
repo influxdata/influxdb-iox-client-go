@@ -3,7 +3,7 @@ package influxdbiox
 import (
 	"context"
 
-	"github.com/apache/arrow/go/arrow/flight"
+	"github.com/apache/arrow/go/v7/arrow/flight"
 	management "github.com/influxdata/influxdb-iox-client-go/internal/management"
 	influxdbpbdataprotocol "github.com/influxdata/influxdb-pb-data-protocol/golang"
 	"google.golang.org/grpc"

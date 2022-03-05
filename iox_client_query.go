@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"math/rand"
 
-	"github.com/apache/arrow/go/arrow/flight"
-	"github.com/apache/arrow/go/arrow/ipc"
-	"github.com/apache/arrow/go/arrow/memory"
+	"github.com/apache/arrow/go/v7/arrow/flight"
+	"github.com/apache/arrow/go/v7/arrow/ipc"
+	"github.com/apache/arrow/go/v7/arrow/memory"
 	"google.golang.org/grpc"
 )
 
@@ -113,7 +113,7 @@ func (r *QueryRequest) Query(ctx context.Context, args ...interface{}) (*flight.
 	}
 	doGetClient, err := r.client.flightClient.DoGet(ctx, &flight.Ticket{Ticket: ticket}, r.grpcCallOptions...)
 	if err != nil {
-		return nil, fmt.Errorf("Arrow Flight DoGet request failed: %w", err)
+		return nil, fmt.Errorf("arrow Flight DoGet request failed: %w", err)
 	}
 	flightReader, err := flight.NewRecordReader(doGetClient, ipc.WithAllocator(r.allocator))
 	if err != nil {
