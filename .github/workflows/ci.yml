@@ -14,9 +14,6 @@ jobs:
       matrix:
         go: [ "1.16", "1.17" ]
         package: [ ".", "./ioxsql" ]
-        exclude:
-        - go: 1.16
-          package: tests-integration
     runs-on: ubuntu-latest
     steps:
 
