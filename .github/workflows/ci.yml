@@ -28,11 +28,6 @@ jobs:
       with:
         go-version: ${{ matrix.go }}
 
-    - name: Test
-      run: >
-        cd ${{ matrix.package }} &&
-        go test
-
     - name: Fmt
       run: >
         test -z $(gofmt -s -l ./${{ matrix.package }} | head -n 1) || ( gofmt -s -d ./${{ matrix.package }} ; exit 1 )
