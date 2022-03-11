@@ -64,9 +64,10 @@ type QueryRequest struct {
 
 func newRequest(client *Client, database, query string) *QueryRequest {
 	return &QueryRequest{
-		client:   client,
-		database: database,
-		query:    query,
+		client:    client,
+		database:  database,
+		query:     query,
+		allocator: memory.DefaultAllocator,
 	}
 }
 
