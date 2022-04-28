@@ -48,7 +48,6 @@ func openNewDatabase(ctx context.Context, t *testing.T) (*influxdbiox.Client, st
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = client.Close() })
 	require.NoError(t, client.Handshake(ctx))
-	require.NoError(t, client.CreateDatabase(ctx, databaseName))
 
 	writeURL, err := url.Parse(fmt.Sprintf("http://%s:%s/api/v2/write", host, httpPort))
 	require.NoError(t, err)
