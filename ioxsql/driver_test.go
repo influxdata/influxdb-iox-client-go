@@ -51,7 +51,6 @@ func openNewDatabase(ctx context.Context, t *testing.T) (*sql.DB, *influxdbiox.C
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = client.Close() })
 	require.NoError(t, client.Handshake(ctx))
-	require.NoError(t, client.CreateDatabase(ctx, databaseName))
 
 	sqlDB, err := sql.Open(ioxsql.DriverName, dsn)
 	require.NoError(t, err)
