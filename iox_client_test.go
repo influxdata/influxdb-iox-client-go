@@ -80,10 +80,13 @@ func writeDataset(t *testing.T, writeURL string) {
 	resp, err := http.Post(writeURL, "text/plain; charset=utf-8", bytes.NewReader(e.Bytes()))
 	require.NoError(t, err)
 	require.Equal(t, 2, resp.StatusCode/100)
+
+	// Hack, really we should be checking whether the data is readable
+	time.Sleep(time.Second)
 }
 
 func TestClient(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	t.Cleanup(cancel)
 
 	client, writeURL := openNewDatabase(ctx, t)
