@@ -87,6 +87,9 @@ func writeDataset(t *testing.T, writeURL string) {
 	resp, err := http.Post(writeURL, "text/plain; charset=utf-8", bytes.NewReader(e.Bytes()))
 	require.NoError(t, err)
 	require.Equal(t, 2, resp.StatusCode/100)
+
+	// Hack, really we should be checking whether the data is readable
+	time.Sleep(time.Second)
 }
 
 func prepareStmt(t *testing.T, db *sql.DB, query string) *sql.Stmt {
@@ -104,7 +107,7 @@ func queryStmt(t *testing.T, stmt *sql.Stmt, args ...interface{}) *sql.Rows {
 }
 
 func TestSQLOpen(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	openNewDatabase(ctx, t)
 }
@@ -137,7 +140,7 @@ func TestNormalLifeCycle(t *testing.T) {
 }
 
 func TestTransactionsNotSupported(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	db, _, _ := openNewDatabase(ctx, t)
 
@@ -146,7 +149,7 @@ func TestTransactionsNotSupported(t *testing.T) {
 }
 
 func TestQueryCloseRowsEarly(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	db, _, writeURL := openNewDatabase(ctx, t)
 	writeDataset(t, writeURL)
@@ -179,7 +182,7 @@ func TestQueryCloseRowsEarly(t *testing.T) {
 }
 
 func TestExecNotSupported(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	db, _, _ := openNewDatabase(ctx, t)
 	_, err := db.Exec("create table t(a varchar not null)")
@@ -187,7 +190,7 @@ func TestExecNotSupported(t *testing.T) {
 }
 
 func TestArgsNotSupported(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	db, _, _ := openNewDatabase(ctx, t)
 
@@ -201,7 +204,7 @@ func TestArgsNotSupported(t *testing.T) {
 func TestConnQueryNull(t *testing.T) {
 	t.Skip("IOx/CF/Arrow bug in null handling")
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	db, _, writeURL := openNewDatabase(ctx, t)
 	writeDataset(t, writeURL)
@@ -220,9 +223,10 @@ func TestConnQueryNull(t *testing.T) {
 }
 
 func TestConnQueryConstantString(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	db, _, _ := openNewDatabase(ctx, t)
+	db, _, writeURL := openNewDatabase(ctx, t)
+	writeDataset(t, writeURL)
 
 	var got string
 	err := db.QueryRow(`select 'live beef'`).Scan(&got)
@@ -233,9 +237,10 @@ func TestConnQueryConstantString(t *testing.T) {
 
 func TestConnQueryConstantByteSlice(t *testing.T) {
 	// This might be implemented in DataFusion later, at which time, this test will fail
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	db, _, _ := openNewDatabase(ctx, t)
+	db, _, writeURL := openNewDatabase(ctx, t)
+	writeDataset(t, writeURL)
 
 	// expected := []byte{222, 173, 190, 239}
 	// var actual []byte
@@ -250,7 +255,7 @@ func TestConnQueryConstantByteSlice(t *testing.T) {
 }
 
 func TestConnQueryFailure(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	db, _, _ := openNewDatabase(ctx, t)
 
@@ -259,9 +264,10 @@ func TestConnQueryFailure(t *testing.T) {
 }
 
 func TestConnQueryRowUnsupportedType(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	db, _, _ := openNewDatabase(ctx, t)
+	db, _, writeURL := openNewDatabase(ctx, t)
+	writeDataset(t, writeURL)
 
 	query := "select 1::UUID"
 
@@ -272,7 +278,7 @@ func TestConnQueryRowUnsupportedType(t *testing.T) {
 }
 
 func TestConnRaw(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	db, _, _ := openNewDatabase(ctx, t)
 
@@ -287,7 +293,7 @@ func TestConnRaw(t *testing.T) {
 }
 
 func TestConnPingContextSuccess(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	db, _, _ := openNewDatabase(ctx, t)
 
@@ -295,7 +301,7 @@ func TestConnPingContextSuccess(t *testing.T) {
 }
 
 func TestConnPrepareContextSuccess(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	db, _, _ := openNewDatabase(ctx, t)
 
@@ -305,7 +311,7 @@ func TestConnPrepareContextSuccess(t *testing.T) {
 }
 
 func TestConnQueryContextSuccess(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	db, _, writeURL := openNewDatabase(ctx, t)
 	writeDataset(t, writeURL)
@@ -322,9 +328,10 @@ func TestConnQueryContextSuccess(t *testing.T) {
 }
 
 func TestConnQueryContextFailureRetry(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	db, _, _ := openNewDatabase(ctx, t)
+	db, _, writeURL := openNewDatabase(ctx, t)
+	writeDataset(t, writeURL)
 
 	{
 		conn, err := db.Conn(ctx)
@@ -341,9 +348,10 @@ func TestConnQueryContextFailureRetry(t *testing.T) {
 }
 
 func TestRowsColumnTypeDatabaseTypeName(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	db, _, _ := openNewDatabase(ctx, t)
+	db, _, writeURL := openNewDatabase(ctx, t)
+	writeDataset(t, writeURL)
 
 	rows, err := db.Query("select 42::bigint as v")
 	require.NoError(t, err)
@@ -357,7 +365,7 @@ func TestRowsColumnTypeDatabaseTypeName(t *testing.T) {
 }
 
 func TestStmtQueryContextCancel(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	db, _, _ := openNewDatabase(ctx, t)
 
@@ -371,9 +379,10 @@ func TestStmtQueryContextCancel(t *testing.T) {
 }
 
 func TestStmtQueryContextSuccess(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	db, _, _ := openNewDatabase(ctx, t)
+	db, _, writeURL := openNewDatabase(ctx, t)
+	writeDataset(t, writeURL)
 
 	stmt, err := db.PrepareContext(ctx, "select 1")
 	require.NoError(t, err)
@@ -390,9 +399,10 @@ func TestStmtQueryContextSuccess(t *testing.T) {
 }
 
 func TestRowsColumnTypes(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	db, _, _ := openNewDatabase(ctx, t)
+	db, _, writeURL := openNewDatabase(ctx, t)
+	writeDataset(t, writeURL)
 
 	columnTypesTests := []struct {
 		Name     string
@@ -472,7 +482,7 @@ func TestRowsColumnTypes(t *testing.T) {
 }
 
 func TestQueryLifeCycle(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	db, _, writeURL := openNewDatabase(ctx, t)
 	writeDataset(t, writeURL)
