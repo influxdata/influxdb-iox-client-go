@@ -17,7 +17,7 @@ This project does not run tests as part of CI.
 Most tests depend on a running instance of InfluxDB/IOx, and each creates its own database.
 To start an in-memory instance, from the [InfluxDB/IOx repository](https://github.com/influxdata/influxdb_iox/) root:
 ```console
-$ INFLUXDB_IOX_ID=42 cargo run -- run
+$ cargo run
 ```
 
 Then run the tests like any golang test:
