@@ -4,15 +4,17 @@ import (
 	"context"
 
 	"github.com/apache/arrow/go/v8/arrow/flight"
+	ingester "github.com/influxdata/influxdb-iox-client-go/internal/ingester"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
 )
 
 // Client is the primary handle to interact with InfluxDB/IOx.
 type Client struct {
-	config       *ClientConfig
-	grpcClient   *grpc.ClientConn
-	flightClient flight.FlightServiceClient
+	config                  *ClientConfig
+	grpcClient              *grpc.ClientConn
+	flightClient            flight.FlightServiceClient
+	ingesterWriteInfoClient ingester.WriteInfoServiceClient
 }
 
 // NewClient instantiates a connection with the InfluxDB/IOx gRPC services.
@@ -42,6 +44,7 @@ func (c *Client) Reconnect(ctx context.Context) error {
 	}
 	c.grpcClient = grpcClient
 	c.flightClient = flight.NewFlightServiceClient(grpcClient)
+	c.ingesterWriteInfoClient = ingester.NewWriteInfoServiceClient(grpcClient)
 
 	return nil
 }
