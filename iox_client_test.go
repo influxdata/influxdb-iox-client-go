@@ -12,8 +12,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/apache/arrow/go/v7/arrow/array"
-	"github.com/apache/arrow/go/v7/arrow/memory"
+	"github.com/apache/arrow/go/v8/arrow/array"
+	"github.com/apache/arrow/go/v8/arrow/memory"
 	influxdbiox "github.com/influxdata/influxdb-iox-client-go"
 	"github.com/influxdata/line-protocol/v2/lineprotocol"
 	"github.com/stretchr/testify/require"
