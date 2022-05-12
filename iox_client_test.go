@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/apache/arrow/go/v8/arrow/array"
-	"github.com/apache/arrow/go/v8/arrow/memory"
 	influxdbiox "github.com/influxdata/influxdb-iox-client-go"
 	"github.com/influxdata/line-protocol/v2/lineprotocol"
 	"github.com/stretchr/testify/require"
@@ -62,7 +61,7 @@ func openNewDatabase(ctx context.Context, t *testing.T) (*influxdbiox.Client, st
 	return client, writeURL.String()
 }
 
-func writeDataset(t *testing.T, writeURL string) {
+func writeDataset(ctx context.Context, t *testing.T, writeURL string) *http.Response {
 	e := new(lineprotocol.Encoder)
 	e.SetLax(false)
 	e.SetPrecision(lineprotocol.Nanosecond)
@@ -77,12 +76,14 @@ func writeDataset(t *testing.T, writeURL string) {
 	}
 	require.NoError(t, e.Err())
 
-	resp, err := http.Post(writeURL, "text/plain; charset=utf-8", bytes.NewReader(e.Bytes()))
+	request, err := http.NewRequestWithContext(ctx, http.MethodPost, writeURL, bytes.NewReader(e.Bytes()))
 	require.NoError(t, err)
-	require.Equal(t, 2, resp.StatusCode/100)
+	request.Header.Set("Content-Type", "text/plain; charset=utf-8")
+	response, err := http.DefaultClient.Do(request)
+	require.NoError(t, err)
+	require.Equal(t, 2, response.StatusCode/100)
 
-	// Hack, really we should be checking whether the data is readable
-	time.Sleep(time.Second)
+	return response
 }
 
 func TestClient(t *testing.T) {
@@ -90,11 +91,10 @@ func TestClient(t *testing.T) {
 	t.Cleanup(cancel)
 
 	client, writeURL := openNewDatabase(ctx, t)
-	writeDataset(t, writeURL)
+	writeDataset(ctx, t, writeURL)
 
 	req, err := client.PrepareQuery(ctx, "", "select count(*) from t;")
 	require.NoError(t, err)
-	req = req.WithAllocator(memory.DefaultAllocator)
 
 	reader, err := req.Query(ctx)
 	require.NoError(t, err)

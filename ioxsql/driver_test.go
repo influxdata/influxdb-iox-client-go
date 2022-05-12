@@ -69,7 +69,7 @@ func openNewDatabase(ctx context.Context, t *testing.T) (*sql.DB, *influxdbiox.C
 	return sqlDB, client, writeURL.String()
 }
 
-func writeDataset(t *testing.T, writeURL string) {
+func writeDataset(ctx context.Context, t *testing.T, client *influxdbiox.Client, writeURL string) {
 	e := new(lineprotocol.Encoder)
 	e.SetLax(false)
 	e.SetPrecision(lineprotocol.Nanosecond)
@@ -84,12 +84,16 @@ func writeDataset(t *testing.T, writeURL string) {
 	}
 	require.NoError(t, e.Err())
 
-	resp, err := http.Post(writeURL, "text/plain; charset=utf-8", bytes.NewReader(e.Bytes()))
+	request, err := http.NewRequestWithContext(ctx, http.MethodPost, writeURL, bytes.NewReader(e.Bytes()))
 	require.NoError(t, err)
-	require.Equal(t, 2, resp.StatusCode/100)
+	request.Header.Set("Content-Type", "text/plain; charset=utf-8")
+	response, err := http.DefaultClient.Do(request)
+	require.NoError(t, err)
+	require.Equal(t, 2, response.StatusCode/100)
 
-	// Hack, really we should be checking whether the data is readable
-	time.Sleep(time.Second)
+	writeToken, err := influxdbiox.WriteTokenFromHTTPResponse(response)
+	require.NoError(t, err)
+	require.NoError(t, client.WaitForReadable(ctx, writeToken))
 }
 
 func prepareStmt(t *testing.T, db *sql.DB, query string) *sql.Stmt {
@@ -115,8 +119,8 @@ func TestSQLOpen(t *testing.T) {
 func TestNormalLifeCycle(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
 	defer cancel()
-	db, _, writeURL := openNewDatabase(ctx, t)
-	writeDataset(t, writeURL)
+	db, client, writeURL := openNewDatabase(ctx, t)
+	writeDataset(ctx, t, client, writeURL)
 
 	stmt := prepareStmt(t, db, "select foo, v from t ORDER BY v ASC")
 	rows := queryStmt(t, stmt)
@@ -151,8 +155,8 @@ func TestTransactionsNotSupported(t *testing.T) {
 func TestQueryCloseRowsEarly(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	db, _, writeURL := openNewDatabase(ctx, t)
-	writeDataset(t, writeURL)
+	db, client, writeURL := openNewDatabase(ctx, t)
+	writeDataset(ctx, t, client, writeURL)
 
 	stmt := prepareStmt(t, db, "select foo, v from t ORDER BY v ASC")
 	rows := queryStmt(t, stmt)
@@ -206,8 +210,8 @@ func TestConnQueryNull(t *testing.T) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	db, _, writeURL := openNewDatabase(ctx, t)
-	writeDataset(t, writeURL)
+	db, client, writeURL := openNewDatabase(ctx, t)
+	writeDataset(ctx, t, client, writeURL)
 
 	row := db.QueryRow("select foo, v from t where v = 1")
 	require.NoError(t, row.Err())
@@ -225,8 +229,8 @@ func TestConnQueryNull(t *testing.T) {
 func TestConnQueryConstantString(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	db, _, writeURL := openNewDatabase(ctx, t)
-	writeDataset(t, writeURL)
+	db, client, writeURL := openNewDatabase(ctx, t)
+	writeDataset(ctx, t, client, writeURL)
 
 	var got string
 	err := db.QueryRow(`select 'live beef'`).Scan(&got)
@@ -239,8 +243,8 @@ func TestConnQueryConstantByteSlice(t *testing.T) {
 	// This might be implemented in DataFusion later, at which time, this test will fail
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	db, _, writeURL := openNewDatabase(ctx, t)
-	writeDataset(t, writeURL)
+	db, client, writeURL := openNewDatabase(ctx, t)
+	writeDataset(ctx, t, client, writeURL)
 
 	// expected := []byte{222, 173, 190, 239}
 	// var actual []byte
@@ -266,8 +270,8 @@ func TestConnQueryFailure(t *testing.T) {
 func TestConnQueryRowUnsupportedType(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	db, _, writeURL := openNewDatabase(ctx, t)
-	writeDataset(t, writeURL)
+	db, client, writeURL := openNewDatabase(ctx, t)
+	writeDataset(ctx, t, client, writeURL)
 
 	query := "select 1::UUID"
 
@@ -313,8 +317,8 @@ func TestConnPrepareContextSuccess(t *testing.T) {
 func TestConnQueryContextSuccess(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	db, _, writeURL := openNewDatabase(ctx, t)
-	writeDataset(t, writeURL)
+	db, client, writeURL := openNewDatabase(ctx, t)
+	writeDataset(ctx, t, client, writeURL)
 
 	rows, err := db.QueryContext(ctx, "select foo, v from t ORDER BY v ASC")
 	require.NoError(t, err)
@@ -330,8 +334,8 @@ func TestConnQueryContextSuccess(t *testing.T) {
 func TestConnQueryContextFailureRetry(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	db, _, writeURL := openNewDatabase(ctx, t)
-	writeDataset(t, writeURL)
+	db, client, writeURL := openNewDatabase(ctx, t)
+	writeDataset(ctx, t, client, writeURL)
 
 	{
 		conn, err := db.Conn(ctx)
@@ -350,8 +354,8 @@ func TestConnQueryContextFailureRetry(t *testing.T) {
 func TestRowsColumnTypeDatabaseTypeName(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	db, _, writeURL := openNewDatabase(ctx, t)
-	writeDataset(t, writeURL)
+	db, client, writeURL := openNewDatabase(ctx, t)
+	writeDataset(ctx, t, client, writeURL)
 
 	rows, err := db.Query("select 42::bigint as v")
 	require.NoError(t, err)
@@ -381,8 +385,8 @@ func TestStmtQueryContextCancel(t *testing.T) {
 func TestStmtQueryContextSuccess(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	db, _, writeURL := openNewDatabase(ctx, t)
-	writeDataset(t, writeURL)
+	db, client, writeURL := openNewDatabase(ctx, t)
+	writeDataset(ctx, t, client, writeURL)
 
 	stmt, err := db.PrepareContext(ctx, "select 1")
 	require.NoError(t, err)
@@ -401,8 +405,8 @@ func TestStmtQueryContextSuccess(t *testing.T) {
 func TestRowsColumnTypes(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	db, _, writeURL := openNewDatabase(ctx, t)
-	writeDataset(t, writeURL)
+	db, client, writeURL := openNewDatabase(ctx, t)
+	writeDataset(ctx, t, client, writeURL)
 
 	columnTypesTests := []struct {
 		Name     string
@@ -484,8 +488,8 @@ func TestRowsColumnTypes(t *testing.T) {
 func TestQueryLifeCycle(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	db, _, writeURL := openNewDatabase(ctx, t)
-	writeDataset(t, writeURL)
+	db, client, writeURL := openNewDatabase(ctx, t)
+	writeDataset(ctx, t, client, writeURL)
 
 	rows, err := db.Query("SELECT foo, v FROM t WHERE 3 = 3 ORDER BY v ASC")
 	require.NoError(t, err)
