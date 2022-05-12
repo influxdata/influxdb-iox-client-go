@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 set -e
 
@@ -11,7 +11,7 @@ for package in . ./ioxsql; do
   if ! go build; then
     fail=1
   fi
-  if [[ ! -z $(gofmt -s -l . | head -n 1) ]]; then
+  if [[ -n $(gofmt -s -l . | head -n 1) ]]; then
     fail=1
     gofmt -s -d .
   fi

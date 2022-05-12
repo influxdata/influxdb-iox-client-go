@@ -7,6 +7,7 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
+	"google.golang.org/grpc/credentials/insecure"
 	"io/ioutil"
 	"net"
 	"strings"
@@ -115,15 +116,15 @@ func ClientConfigFromAddressString(s string) (*ClientConfig, error) {
 // newGRPCClient returns a *grpc.ClientConn based on the config, or returns
 // the instance already set as ClientConfig.GRPCClient.
 func (dc *ClientConfig) newGRPCClient(ctx context.Context) (*grpc.ClientConn, error) {
-	var tlsDialOption grpc.DialOption
+	var creds credentials.TransportCredentials
 	if tlsConfig, err := dc.getTLSConfig(); err != nil {
 		return nil, err
 	} else if tlsConfig != nil {
-		tlsDialOption = grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig))
+		creds = credentials.NewTLS(tlsConfig)
 	} else {
-		tlsDialOption = grpc.WithInsecure()
+		creds = insecure.NewCredentials()
 	}
-	dialOptions := append([]grpc.DialOption{tlsDialOption}, dc.DialOptions...)
+	dialOptions := append([]grpc.DialOption{grpc.WithTransportCredentials(creds)}, dc.DialOptions...)
 
 	grpcClient, err := grpc.DialContext(ctx, dc.Address, dialOptions...)
 	if err != nil {
