@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/apache/arrow/go/v8/arrow/array"
+	"github.com/apache/arrow/go/v7/arrow/array"
 	influxdbiox "github.com/influxdata/influxdb-iox-client-go"
 )
 

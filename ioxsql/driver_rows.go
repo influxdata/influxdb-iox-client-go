@@ -9,9 +9,9 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/apache/arrow/go/v8/arrow"
-	"github.com/apache/arrow/go/v8/arrow/array"
-	"github.com/apache/arrow/go/v8/arrow/flight"
+	"github.com/apache/arrow/go/v7/arrow"
+	"github.com/apache/arrow/go/v7/arrow/array"
+	"github.com/apache/arrow/go/v7/arrow/flight"
 	influxdbiox "github.com/influxdata/influxdb-iox-client-go"
 )
 
