@@ -2,7 +2,7 @@ package influxdbiox_test
 
 import (
 	"context"
-	"github.com/apache/arrow/go/v8/arrow/array"
+	"github.com/apache/arrow/go/v7/arrow/array"
 	influxdbiox "github.com/influxdata/influxdb-iox-client-go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

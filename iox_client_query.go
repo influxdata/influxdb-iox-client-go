@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"math/rand"
 
-	"github.com/apache/arrow/go/v8/arrow/flight"
-	"github.com/apache/arrow/go/v8/arrow/ipc"
-	"github.com/apache/arrow/go/v8/arrow/memory"
+	"github.com/apache/arrow/go/v7/arrow/flight"
+	"github.com/apache/arrow/go/v7/arrow/ipc"
+	"github.com/apache/arrow/go/v7/arrow/memory"
 	"google.golang.org/grpc"
 )
 
