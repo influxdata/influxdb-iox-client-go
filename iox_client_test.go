@@ -19,24 +19,42 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// Return the environment value for env, or default to the provided fallback
+// value.
+func envOrDefault(env string, fallback string) string {
+	v, ok := os.LookupEnv(env)
+	if !ok {
+		return fallback
+	}
+	return v
+}
+
+// Return the hostname of the test IOx instance.
+func getTestHost() string {
+	return envOrDefault("INFLUXDB_IOX_HOST", "localhost")
+}
+
+// Return the HTTP port for the test IOx instance.
+func getTestHttpPort() string {
+	return envOrDefault("INFLUXDB_IOX_HTTP_PORT", "8080")
+}
+
+// Return the gRPC port for the test IOx instance.
+func getTestGRPCPort() string {
+	return envOrDefault("INFLUXDB_IOX_GRPC_PORT", "8082")
+}
+
+// Initialises the IOx client with a randomly generated database name.
+//
+// Returns the client & per-client database name.
 func openNewDatabase(ctx context.Context, t *testing.T) (*influxdbiox.Client, string) {
 	databaseName := fmt.Sprintf("test_%d", time.Now().UnixNano())
 	if testing.Verbose() {
 		t.Logf("temporary database name: %q", databaseName)
 	}
 
-	host, found := os.LookupEnv("INFLUXDB_IOX_HOST")
-	if !found {
-		host = "localhost"
-	}
-	grpcPort, found := os.LookupEnv("INFLUXDB_IOX_GRPC_PORT")
-	if !found {
-		grpcPort = "8082"
-	}
-	httpPort, found := os.LookupEnv("INFLUXDB_IOX_HTTP_PORT")
-	if !found {
-		httpPort = "8080"
-	}
+	host := getTestHost()
+	grpcPort := getTestGRPCPort()
 
 	config := influxdbiox.ClientConfig{
 		Address:     fmt.Sprintf("%s:%s", host, grpcPort),
@@ -49,20 +67,24 @@ func openNewDatabase(ctx context.Context, t *testing.T) (*influxdbiox.Client, st
 	t.Cleanup(func() { _ = client.Close() })
 	require.NoError(t, client.Handshake(ctx))
 
-	writeURL, err := url.Parse(fmt.Sprintf("http://%s:%s/api/v2/write", host, httpPort))
+	return client, databaseName
+}
+
+// Write some data to a the specified table, within the specified database.
+func writeDataset(ctx context.Context, t *testing.T, databaseName string, table string) *http.Response {
+	writeURL, err := url.Parse(fmt.Sprintf("http://%s:%s/api/v2/write", getTestHost(), getTestHttpPort()))
 	require.NoError(t, err)
-	queryValues := writeURL.Query()
+
+	// Break the database name into an org/bucket pair.
 	orgBucket := strings.SplitN(databaseName, "_", 2)
 	require.Len(t, orgBucket, 2)
+
+	queryValues := writeURL.Query()
 	queryValues.Set("org", orgBucket[0])
 	queryValues.Set("bucket", orgBucket[1])
 	queryValues.Set("precision", "ns")
 	writeURL.RawQuery = queryValues.Encode()
 
-	return client, writeURL.String()
-}
-
-func writeDataset(ctx context.Context, t *testing.T, writeURL string) *http.Response {
 	e := new(lineprotocol.Encoder)
 	e.SetLax(false)
 	e.SetPrecision(lineprotocol.Nanosecond)
@@ -70,14 +92,14 @@ func writeDataset(ctx context.Context, t *testing.T, writeURL string) *http.Resp
 	baseTime := time.Date(2021, time.April, 15, 0, 0, 0, 0, time.UTC)
 
 	for i := 0; i < 10; i++ {
-		e.StartLine("t")
+		e.StartLine(table)
 		e.AddTag("foo", "bar")
 		e.AddField("v", lineprotocol.MustNewValue(int64(i)))
 		e.EndLine(baseTime.Add(time.Minute * time.Duration(i)))
 	}
 	require.NoError(t, e.Err())
 
-	request, err := http.NewRequestWithContext(ctx, http.MethodPost, writeURL, bytes.NewReader(e.Bytes()))
+	request, err := http.NewRequestWithContext(ctx, http.MethodPost, writeURL.String(), bytes.NewReader(e.Bytes()))
 	require.NoError(t, err)
 	request.Header.Set("Content-Type", "text/plain; charset=utf-8")
 	response, err := http.DefaultClient.Do(request)
@@ -91,8 +113,8 @@ func TestClient(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	t.Cleanup(cancel)
 
-	client, writeURL := openNewDatabase(ctx, t)
-	writeDataset(ctx, t, writeURL)
+	client, dbName := openNewDatabase(ctx, t)
+	writeDataset(ctx, t, dbName, "t")
 
 	req, err := client.PrepareQuery(ctx, "", "select count(*) from t;")
 	require.NoError(t, err)
