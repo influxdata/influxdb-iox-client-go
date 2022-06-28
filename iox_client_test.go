@@ -4,13 +4,14 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"google.golang.org/grpc"
 	"net/http"
 	"net/url"
 	"os"
 	"strings"
 	"testing"
 	"time"
+
+	"google.golang.org/grpc"
 
 	"github.com/apache/arrow/go/v7/arrow/array"
 	influxdbiox "github.com/influxdata/influxdb-iox-client-go"
@@ -102,6 +103,6 @@ func TestClient(t *testing.T) {
 
 	for reader.Next() {
 		record := reader.Record()
-		t.Logf("%v", record.Column(0).(*array.Uint64).Uint64Values())
+		t.Logf("%v", record.Column(0).(*array.Int64).Int64Values())
 	}
 }

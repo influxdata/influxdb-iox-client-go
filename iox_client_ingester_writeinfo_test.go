@@ -2,15 +2,16 @@ package influxdbiox_test
 
 import (
 	"context"
-	"github.com/apache/arrow/go/v7/arrow/array"
-	influxdbiox "github.com/influxdata/influxdb-iox-client-go"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/textproto"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/apache/arrow/go/v7/arrow/array"
+	influxdbiox "github.com/influxdata/influxdb-iox-client-go"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestWriteTokenFromHTTPResponse(t *testing.T) {
@@ -72,6 +73,6 @@ func TestClient_WaitForReadable(t *testing.T) {
 
 	require.True(t, reader.Next())
 	record := reader.Record()
-	assert.Equal(t, []uint64{10}, record.Column(0).(*array.Uint64).Uint64Values())
+	assert.Equal(t, []int64{10}, record.Column(0).(*array.Int64).Int64Values())
 	require.False(t, reader.Next())
 }
