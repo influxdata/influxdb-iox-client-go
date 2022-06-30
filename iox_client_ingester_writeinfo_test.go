@@ -55,8 +55,8 @@ func TestClient_WaitForReadable(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	t.Cleanup(cancel)
 
-	client, writeURL := openNewDatabase(ctx, t)
-	response := writeDataset(ctx, t, writeURL)
+	client, dbName := openNewDatabase(ctx, t)
+	response := writeDataset(ctx, t, dbName, "bananas")
 
 	writeToken, err := influxdbiox.WriteTokenFromHTTPResponse(response)
 	require.NoError(t, err)
@@ -64,7 +64,7 @@ func TestClient_WaitForReadable(t *testing.T) {
 	err = client.WaitForReadable(ctx, writeToken)
 	require.NoError(t, err)
 
-	queryRequest, err := client.PrepareQuery(ctx, "", "select count(*) from t;")
+	queryRequest, err := client.PrepareQuery(ctx, "", "select count(*) from bananas;")
 	require.NoError(t, err)
 
 	reader, err := queryRequest.Query(ctx)
