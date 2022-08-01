@@ -7,7 +7,7 @@ require (
 	github.com/influxdata/line-protocol/v2 v2.2.1
 	github.com/stretchr/testify v1.7.5
 	google.golang.org/grpc v1.44.0
-	google.golang.org/protobuf v1.28.0
+	google.golang.org/protobuf v1.28.1
 )
 
 require (
