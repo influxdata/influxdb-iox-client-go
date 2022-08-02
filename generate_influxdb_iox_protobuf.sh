@@ -29,15 +29,29 @@ git clone \
   https://github.com/influxdata/influxdb_iox \
   gen
 
-filenames=$(find gen/generated_types/protos/influxdata/iox/ingester -name '*.proto')
-protoc \
-  --proto_path=gen/generated_types/protos/ \
-  --plugin protoc-gen-go="$(which protoc-gen-go)" \
-  --plugin protoc-gen-go-grpc="$(which protoc-gen-go-grpc)" \
-  --go_out gen \
-  --go-grpc_out gen \
-  ${filenames}
+# Generate Go files for the specified IOx service.
+#
+# $1: the IOx proto directory name to generate code for
+#
+# Generates directories by name from
+#  https://github.com/influxdata/influxdb_iox/tree/main/generated_types/protos/influxdata/iox
+function generate_service {
+  filenames=$(find "gen/generated_types/protos/influxdata/iox/${1}" -name '*.proto')
+  protoc \
+    --proto_path=gen/generated_types/protos/ \
+    --plugin protoc-gen-go="$(which protoc-gen-go)" \
+    --plugin protoc-gen-go-grpc="$(which protoc-gen-go-grpc)" \
+    --go_out gen \
+    --go-grpc_out gen \
+    ${filenames}
 
-mv gen/github.com/influxdata/iox/ingester/v1/*.go internal/ingester/
+  mkdir "internal/${1}" 2>/dev/null || true
+  mv gen/github.com/influxdata/iox/"${1}"/v1/*.go "internal/${1}/"
+  
+  echo "generated ${1}"
+}
+
+generate_service "ingester"
+generate_service "schema"
 
 rm -rf gen
