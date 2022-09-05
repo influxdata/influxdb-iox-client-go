@@ -98,13 +98,14 @@ func newConnection(client *influxdbiox.Client) *Connection {
 
 // Client returns the instance of *influxdbiox.Client backing this Connection.
 // This is useful for sql.Conn.Raw():
-//  conn, err := db.Conn(context.Background())
-//  err = conn.Raw(func(driverConn interface{}) error {
-//    // This client object has type *influxdbiox.Client
-//    client := driverConn.(*ioxsql.Connection).Client()
-//    ...
-//    return nil
-//  })
+//
+//	conn, err := db.Conn(context.Background())
+//	err = conn.Raw(func(driverConn interface{}) error {
+//	  // This client object has type *influxdbiox.Client
+//	  client := driverConn.(*ioxsql.Connection).Client()
+//	  ...
+//	  return nil
+//	})
 func (c *Connection) Client() *influxdbiox.Client {
 	return c.client
 }

@@ -98,9 +98,10 @@ func (r *QueryRequest) WithAllocator(alloc memory.Allocator) *QueryRequest {
 // Query sends a query via the Flight RPC DoGet.
 //
 // The returned *flight.Reader must be released when the caller is done with it.
-//  reader, err := request.Query(ctx)
-//  defer reader.Release()
-//  ...
+//
+//	reader, err := request.Query(ctx)
+//	defer reader.Release()
+//	...
 func (r *QueryRequest) Query(ctx context.Context, args ...interface{}) (*flight.Reader, error) {
 	if len(args) > 0 {
 		return nil, errors.New("query arguments are not supported")

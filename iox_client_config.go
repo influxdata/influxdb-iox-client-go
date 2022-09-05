@@ -48,7 +48,8 @@ type ClientConfig struct {
 // which can be used as an argument for sql.Open().
 //
 // Example output:
-//  {"address":"localhost:8082","database":"mydb"}
+//
+//	{"address":"localhost:8082","database":"mydb"}
 //
 // To customize the way the JSON string is constructed, call json.Marshal
 // with a *ClientConfig.
@@ -66,11 +67,12 @@ func (dc *ClientConfig) ToJSONString() (string, error) {
 //
 // See ConfigClient for a description of all fields.
 // Example:
-//  {
-//    "address": "localhost:8082",
-//    "tls_cert": "...",
-//    "tls_key": "..."
-//  }
+//
+//	{
+//	  "address": "localhost:8082",
+//	  "tls_cert": "...",
+//	  "tls_key": "..."
+//	}
 func ClientConfigFromJSONString(s string) (*ClientConfig, error) {
 	var dc ClientConfig
 	if err := json.Unmarshal([]byte(s), &dc); err != nil {
@@ -85,15 +87,19 @@ func ClientConfigFromJSONString(s string) (*ClientConfig, error) {
 // ClientConfigFromAddressString constructs an instance of *ClientConfig from an address string.
 //
 // Example, IPv4:
-//  localhost:8082
+//
+//	localhost:8082
+//
 // Example, IPv6:
-//  [::1]:8082
+//
+//	[::1]:8082
 //
 // To specify a default database, as required by ioxsql (the database/sql driver),
 // append a slash to the address.
 //
 // Example:
-//  localhost:8082/mydb
+//
+//	localhost:8082/mydb
 func ClientConfigFromAddressString(s string) (*ClientConfig, error) {
 	var address, database string
 	if index := strings.IndexRune(s, '/'); index >= 0 {
