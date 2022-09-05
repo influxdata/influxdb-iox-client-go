@@ -3,9 +3,10 @@ package influxdbiox
 import (
 	"context"
 	"errors"
-	ingester "github.com/influxdata/influxdb-iox-client-go/internal/ingester"
 	"net/http"
 	"time"
+
+	ingester "github.com/influxdata/influxdb-iox-client-go/internal/ingester"
 )
 
 const tokenWaitInterval = 500 * time.Millisecond
@@ -47,8 +48,8 @@ func WriteTokenFromHTTPResponse(response *http.Response) (string, error) {
 // meaning that the data has been safely stored in a write-ahead log.
 func (c *Client) WaitForDurable(ctx context.Context, writeToken string) error {
 	return c.waitForToken(ctx, writeToken, func(response *ingester.GetWriteInfoResponse) bool {
-		for _, pi := range response.KafkaPartitionInfos {
-			if pi.Status != ingester.KafkaPartitionStatus_KAFKA_PARTITION_STATUS_DURABLE {
+		for _, pi := range response.ShardInfos {
+			if !((pi.Status == ingester.ShardStatus_SHARD_STATUS_DURABLE) || (pi.Status == ingester.ShardStatus_SHARD_STATUS_READABLE) || (pi.Status == ingester.ShardStatus_SHARD_STATUS_PERSISTED)) {
 				return false
 			}
 		}
@@ -60,8 +61,8 @@ func (c *Client) WaitForDurable(ctx context.Context, writeToken string) error {
 // meaning that the data can be queried.
 func (c *Client) WaitForReadable(ctx context.Context, writeToken string) error {
 	return c.waitForToken(ctx, writeToken, func(response *ingester.GetWriteInfoResponse) bool {
-		for _, pi := range response.KafkaPartitionInfos {
-			if pi.Status != ingester.KafkaPartitionStatus_KAFKA_PARTITION_STATUS_READABLE {
+		for _, pi := range response.ShardInfos {
+			if !((pi.Status == ingester.ShardStatus_SHARD_STATUS_READABLE) || (pi.Status == ingester.ShardStatus_SHARD_STATUS_PERSISTED)) {
 				return false
 			}
 		}
@@ -74,8 +75,8 @@ func (c *Client) WaitForReadable(ctx context.Context, writeToken string) error {
 // or object storage.
 func (c *Client) WaitForPersisted(ctx context.Context, writeToken string) error {
 	return c.waitForToken(ctx, writeToken, func(response *ingester.GetWriteInfoResponse) bool {
-		for _, pi := range response.KafkaPartitionInfos {
-			if pi.Status != ingester.KafkaPartitionStatus_KAFKA_PARTITION_STATUS_PERSISTED {
+		for _, pi := range response.ShardInfos {
+			if pi.Status != ingester.ShardStatus_SHARD_STATUS_PERSISTED {
 				return false
 			}
 		}
