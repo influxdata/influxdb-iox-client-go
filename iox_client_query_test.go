@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/apache/arrow/go/v7/arrow/array"
-	influxdbiox "github.com/influxdata/influxdb-iox-client-go"
+	"github.com/apache/arrow/go/v10/arrow/array"
+	"github.com/influxdata/influxdb-iox-client-go/v2"
 )
 
 func ExampleClient_PrepareQuery() {

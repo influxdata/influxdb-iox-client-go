@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	ingester "github.com/influxdata/influxdb-iox-client-go/internal/ingester"
+	ingester "github.com/influxdata/influxdb-iox-client-go/v2/internal/ingester"
 )
 
 const tokenWaitInterval = 500 * time.Millisecond
