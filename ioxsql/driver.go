@@ -7,7 +7,7 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/influxdata/influxdb-iox-client-go"
+	"github.com/influxdata/influxdb-iox-client-go/v2"
 	"google.golang.org/grpc/connectivity"
 )
 

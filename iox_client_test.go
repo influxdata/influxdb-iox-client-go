@@ -13,8 +13,8 @@ import (
 
 	"google.golang.org/grpc"
 
-	"github.com/apache/arrow/go/v7/arrow/array"
-	influxdbiox "github.com/influxdata/influxdb-iox-client-go"
+	"github.com/apache/arrow/go/v10/arrow/array"
+	"github.com/influxdata/influxdb-iox-client-go/v2"
 	"github.com/influxdata/line-protocol/v2/lineprotocol"
 	"github.com/stretchr/testify/require"
 )
@@ -70,7 +70,7 @@ func openNewDatabase(ctx context.Context, t *testing.T) (*influxdbiox.Client, st
 	return client, databaseName
 }
 
-// Write some data to a the specified table, within the specified database.
+// Write some data to the specified table, within the specified database.
 func writeDataset(ctx context.Context, t *testing.T, databaseName string, table string) *http.Response {
 	writeURL, err := url.Parse(fmt.Sprintf("http://%s:%s/api/v2/write", getTestHost(), getTestHttpPort()))
 	require.NoError(t, err)

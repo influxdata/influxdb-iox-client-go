@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	schema "github.com/influxdata/influxdb-iox-client-go/internal/schema"
+	schema "github.com/influxdata/influxdb-iox-client-go/v2/internal/schema"
 )
 
 // ColumnType defines the column data types IOx can represent.

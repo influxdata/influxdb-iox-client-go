@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/influxdata/influxdb-iox-client-go"
+	"github.com/influxdata/influxdb-iox-client-go/v2"
 	"github.com/stretchr/testify/assert"
 )
 

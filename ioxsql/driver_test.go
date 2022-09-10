@@ -15,9 +15,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/apache/arrow/go/v7/arrow"
-	influxdbiox "github.com/influxdata/influxdb-iox-client-go"
-	"github.com/influxdata/influxdb-iox-client-go/ioxsql"
+	"github.com/apache/arrow/go/v10/arrow"
+	"github.com/influxdata/influxdb-iox-client-go/v2"
+	"github.com/influxdata/influxdb-iox-client-go/v2/ioxsql"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
@@ -99,14 +99,14 @@ func writeDataset(ctx context.Context, t *testing.T, client *influxdbiox.Client,
 func prepareStmt(t *testing.T, db *sql.DB, query string) *sql.Stmt {
 	stmt, err := db.Prepare(query)
 	require.NoError(t, err)
-	t.Cleanup(func() { stmt.Close() })
+	t.Cleanup(func() { _ = stmt.Close() })
 	return stmt
 }
 
 func queryStmt(t *testing.T, stmt *sql.Stmt, args ...interface{}) *sql.Rows {
 	rows, err := stmt.Query(args...)
 	require.NoError(t, err)
-	t.Cleanup(func() { rows.Close() })
+	t.Cleanup(func() { _ = rows.Close() })
 	return rows
 }
 

@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	influxdbiox "github.com/influxdata/influxdb-iox-client-go"
+	"github.com/influxdata/influxdb-iox-client-go/v2"
 	"github.com/stretchr/testify/require"
 )
 
