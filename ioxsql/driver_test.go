@@ -251,7 +251,7 @@ func TestConnQueryConstantByteSlice(t *testing.T) {
 
 	_, err := db.Query(`select X'deadbeef'`) // .Scan(&actual)
 	if assert.Error(t, err) {
-		assert.Contains(t, err.Error(), `Unsupported ast node Value(HexStringLiteral("deadbeef")) in sqltorel`)
+		assert.Contains(t, err.Error(), `Unsupported ast node in sqltorel: Value(HexStringLiteral("deadbeef"))`)
 	}
 
 	// require.NoError(t, err)
