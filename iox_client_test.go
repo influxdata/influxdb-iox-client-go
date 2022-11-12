@@ -14,9 +14,10 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/apache/arrow/go/v10/arrow/array"
-	"github.com/influxdata/influxdb-iox-client-go/v2"
 	"github.com/influxdata/line-protocol/v2/lineprotocol"
 	"github.com/stretchr/testify/require"
+
+	"github.com/influxdata/influxdb-iox-client-go/v2"
 )
 
 // Return the environment value for env, or default to the provided fallback
@@ -58,7 +59,7 @@ func openNewDatabase(ctx context.Context, t *testing.T) (*influxdbiox.Client, st
 
 	config := influxdbiox.ClientConfig{
 		Address:     fmt.Sprintf("%s:%s", host, grpcPort),
-		Database:    databaseName,
+		Namespace:   databaseName,
 		DialOptions: []grpc.DialOption{grpc.WithBlock()},
 	}
 
