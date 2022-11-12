@@ -39,8 +39,8 @@ func (c *Client) Handshake(ctx context.Context) error {
 }
 
 type ticketReadInfo struct {
-	DatabaseName string `json:"database_name"`
-	SQLQuery     string `json:"sql_query"`
+	NamespaceName string `json:"namespace_name"`
+	SQLQuery      string `json:"sql_query"`
 }
 
 // PrepareQuery prepares a query request.
@@ -48,7 +48,7 @@ type ticketReadInfo struct {
 // If database is "" then the configured default is used.
 func (c *Client) PrepareQuery(ctx context.Context, database, query string) (*QueryRequest, error) {
 	if database == "" {
-		database = c.config.Database
+		database = c.config.Namespace
 	}
 	return newRequest(c, database, query), nil
 }
@@ -107,8 +107,8 @@ func (r *QueryRequest) Query(ctx context.Context, args ...interface{}) (*flight.
 		return nil, errors.New("query arguments are not supported")
 	}
 	ticket, err := json.Marshal(ticketReadInfo{
-		DatabaseName: r.database,
-		SQLQuery:     r.query,
+		NamespaceName: r.database,
+		SQLQuery:      r.query,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal Arrow DoGet ticket: %w", err)

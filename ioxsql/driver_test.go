@@ -5,7 +5,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/influxdata/line-protocol/v2/lineprotocol"
 	"math"
 	"net/http"
 	"net/url"
@@ -15,18 +14,21 @@ import (
 	"testing"
 	"time"
 
+	"github.com/influxdata/line-protocol/v2/lineprotocol"
+
 	"github.com/apache/arrow/go/v10/arrow"
-	"github.com/influxdata/influxdb-iox-client-go/v2"
-	"github.com/influxdata/influxdb-iox-client-go/v2/ioxsql"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+
+	"github.com/influxdata/influxdb-iox-client-go/v2"
+	"github.com/influxdata/influxdb-iox-client-go/v2/ioxsql"
 )
 
 func openNewDatabase(ctx context.Context, t *testing.T) (*sql.DB, *influxdbiox.Client, string) {
-	databaseName := fmt.Sprintf("test_%d", time.Now().UnixNano())
+	namespaceName := fmt.Sprintf("test_%d", time.Now().UnixNano())
 	if testing.Verbose() {
-		t.Logf("temporary database name: %q", databaseName)
+		t.Logf("temporary namespace name: %q", namespaceName)
 	}
 
 	host, found := os.LookupEnv("INFLUXDB_IOX_HOST")
@@ -42,7 +44,7 @@ func openNewDatabase(ctx context.Context, t *testing.T) (*sql.DB, *influxdbiox.C
 		httpPort = "8080"
 	}
 
-	dsn := fmt.Sprintf("%s:%s/%s", host, grpcPort, databaseName)
+	dsn := fmt.Sprintf("%s:%s/%s", host, grpcPort, namespaceName)
 	config, err := influxdbiox.ClientConfigFromAddressString(dsn)
 	require.NoError(t, err)
 	config.DialOptions = append(config.DialOptions, grpc.WithBlock())
@@ -59,7 +61,7 @@ func openNewDatabase(ctx context.Context, t *testing.T) (*sql.DB, *influxdbiox.C
 	writeURL, err := url.Parse(fmt.Sprintf("http://%s:%s/api/v2/write", host, httpPort))
 	require.NoError(t, err)
 	queryValues := writeURL.Query()
-	orgBucket := strings.SplitN(databaseName, "_", 2)
+	orgBucket := strings.SplitN(namespaceName, "_", 2)
 	require.Len(t, orgBucket, 2)
 	queryValues.Set("org", orgBucket[0])
 	queryValues.Set("bucket", orgBucket[1])
@@ -70,6 +72,7 @@ func openNewDatabase(ctx context.Context, t *testing.T) (*sql.DB, *influxdbiox.C
 }
 
 func writeDataset(ctx context.Context, t *testing.T, client *influxdbiox.Client, writeURL string) {
+	println(writeURL)
 	e := new(lineprotocol.Encoder)
 	e.SetLax(false)
 	e.SetPrecision(lineprotocol.Nanosecond)
@@ -94,6 +97,7 @@ func writeDataset(ctx context.Context, t *testing.T, client *influxdbiox.Client,
 	writeToken, err := influxdbiox.WriteTokenFromHTTPResponse(response)
 	require.NoError(t, err)
 	require.NoError(t, client.WaitForReadable(ctx, writeToken))
+	println("write token says readable")
 }
 
 func prepareStmt(t *testing.T, db *sql.DB, query string) *sql.Stmt {

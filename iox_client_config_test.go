@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/influxdata/influxdb-iox-client-go/v2"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/influxdata/influxdb-iox-client-go/v2"
 )
 
 func ExampleClientConfig_ToJSONString() {
@@ -52,7 +53,7 @@ func TestClientConfigFromAddressString(t *testing.T) {
 		expectError:  false,
 	}, {
 		s:            "localhost:8082/mydb",
-		expectConfig: &influxdbiox.ClientConfig{Address: "localhost:8082", Database: "mydb"},
+		expectConfig: &influxdbiox.ClientConfig{Address: "localhost:8082", Namespace: "mydb"},
 		expectError:  false,
 	}, {
 		s:            "localhost",

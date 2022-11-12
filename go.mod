@@ -1,9 +1,9 @@
 module github.com/influxdata/influxdb-iox-client-go/v2
 
-go 1.17
+go 1.18
 
 require (
-	github.com/apache/arrow/go/v10 v10.0.0-20220919125234-081b70bafeab
+	github.com/apache/arrow/go/v10 v10.0.0
 	github.com/influxdata/line-protocol/v2 v2.2.1
 	github.com/stretchr/testify v1.8.1
 	google.golang.org/grpc v1.49.0
