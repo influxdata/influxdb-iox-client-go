@@ -6,8 +6,9 @@ import (
 	"testing"
 	"time"
 
-	influxdbiox "github.com/influxdata/influxdb-iox-client-go"
 	"github.com/stretchr/testify/require"
+
+	influxdbiox "github.com/influxdata/influxdb-iox-client-go"
 )
 
 func ExampleClient_GetSchema() {
@@ -44,10 +45,10 @@ func TestClient_GetSchema_no_table(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	t.Cleanup(cancel)
 
-	// Create a randomly-named database
+	// Create a randomly-named namespace
 	client, dbName := openNewDatabase(ctx, t)
 
-	// Force creation of the database by writing to it.
+	// Force creation of the namespace by writing to it.
 	writeDataset(ctx, t, dbName, "a_test_table")
 
 	// But ask for a table that was never created.

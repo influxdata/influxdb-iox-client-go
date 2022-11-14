@@ -14,9 +14,10 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/apache/arrow/go/v7/arrow/array"
-	influxdbiox "github.com/influxdata/influxdb-iox-client-go"
 	"github.com/influxdata/line-protocol/v2/lineprotocol"
 	"github.com/stretchr/testify/require"
+
+	influxdbiox "github.com/influxdata/influxdb-iox-client-go"
 )
 
 // Return the environment value for env, or default to the provided fallback
@@ -44,13 +45,13 @@ func getTestGRPCPort() string {
 	return envOrDefault("INFLUXDB_IOX_GRPC_PORT", "8082")
 }
 
-// Initialises the IOx client with a randomly generated database name.
+// Initialises the IOx client with a randomly generated namespace name.
 //
-// Returns the client & per-client database name.
+// Returns the client & per-client namespace name.
 func openNewDatabase(ctx context.Context, t *testing.T) (*influxdbiox.Client, string) {
-	databaseName := fmt.Sprintf("test_%d", time.Now().UnixNano())
+	namespaceName := fmt.Sprintf("test_%d", time.Now().UnixNano())
 	if testing.Verbose() {
-		t.Logf("temporary database name: %q", databaseName)
+		t.Logf("temporary namespace name: %q", namespaceName)
 	}
 
 	host := getTestHost()
@@ -58,7 +59,7 @@ func openNewDatabase(ctx context.Context, t *testing.T) (*influxdbiox.Client, st
 
 	config := influxdbiox.ClientConfig{
 		Address:     fmt.Sprintf("%s:%s", host, grpcPort),
-		Database:    databaseName,
+		Namespace:   namespaceName,
 		DialOptions: []grpc.DialOption{grpc.WithBlock()},
 	}
 
@@ -67,15 +68,15 @@ func openNewDatabase(ctx context.Context, t *testing.T) (*influxdbiox.Client, st
 	t.Cleanup(func() { _ = client.Close() })
 	require.NoError(t, client.Handshake(ctx))
 
-	return client, databaseName
+	return client, namespaceName
 }
 
-// Write some data to a the specified table, within the specified database.
+// Write some data to a the specified table, within the specified namespace.
 func writeDataset(ctx context.Context, t *testing.T, databaseName string, table string) *http.Response {
 	writeURL, err := url.Parse(fmt.Sprintf("http://%s:%s/api/v2/write", getTestHost(), getTestHttpPort()))
 	require.NoError(t, err)
 
-	// Break the database name into an org/bucket pair.
+	// Break the namespace name into an org/bucket pair.
 	orgBucket := strings.SplitN(databaseName, "_", 2)
 	require.Len(t, orgBucket, 2)
 

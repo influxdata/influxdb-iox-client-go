@@ -7,10 +7,11 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
-	"google.golang.org/grpc/credentials/insecure"
 	"io/ioutil"
 	"net"
 	"strings"
+
+	"google.golang.org/grpc/credentials/insecure"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -20,8 +21,8 @@ import (
 type ClientConfig struct {
 	// Address string as host:port
 	Address string `json:"address"`
-	// Default database; optional unless using sql.Open
-	Database string `json:"database,omitempty"`
+	// Default namespace; optional unless using sql.Open
+	Namespace string `json:"namespace,omitempty"`
 
 	// Filename containing PEM encoded certificate for root certificate authority
 	// to use when verifying server certificates.
@@ -49,7 +50,7 @@ type ClientConfig struct {
 //
 // Example output:
 //
-//	{"address":"localhost:8082","database":"mydb"}
+//	{"address":"localhost:8082","namespace":"mydb"}
 //
 // To customize the way the JSON string is constructed, call json.Marshal
 // with a *ClientConfig.
@@ -94,17 +95,17 @@ func ClientConfigFromJSONString(s string) (*ClientConfig, error) {
 //
 //	[::1]:8082
 //
-// To specify a default database, as required by ioxsql (the database/sql driver),
+// To specify a default namespace, as required by ioxsql (the namespace/sql driver),
 // append a slash to the address.
 //
 // Example:
 //
 //	localhost:8082/mydb
 func ClientConfigFromAddressString(s string) (*ClientConfig, error) {
-	var address, database string
+	var address, namespace string
 	if index := strings.IndexRune(s, '/'); index >= 0 {
 		address = s[:index]
-		database = s[index+1:]
+		namespace = s[index+1:]
 	} else {
 		address = s
 	}
@@ -114,8 +115,8 @@ func ClientConfigFromAddressString(s string) (*ClientConfig, error) {
 		return nil, fmt.Errorf("failed to parse client config from address string: %w", err)
 	}
 	return &ClientConfig{
-		Address:  address,
-		Database: database,
+		Address:   address,
+		Namespace: namespace,
 	}, nil
 }
 

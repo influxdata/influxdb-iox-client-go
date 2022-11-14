@@ -1,6 +1,6 @@
 module github.com/influxdata/influxdb-iox-client-go
 
-go 1.17
+go 1.18
 
 require (
 	github.com/apache/arrow/go/v7 v7.0.1

@@ -39,16 +39,16 @@ func (c *Client) Handshake(ctx context.Context) error {
 }
 
 type ticketReadInfo struct {
-	DatabaseName string `json:"database_name"`
-	SQLQuery     string `json:"sql_query"`
+	NamespaceName string `json:"namespace_name"`
+	SQLQuery      string `json:"sql_query"`
 }
 
 // PrepareQuery prepares a query request.
 //
-// If database is "" then the configured default is used.
+// If namespace is "" then the configured default is used.
 func (c *Client) PrepareQuery(ctx context.Context, database, query string) (*QueryRequest, error) {
 	if database == "" {
-		database = c.config.Database
+		database = c.config.Namespace
 	}
 	return newRequest(c, database, query), nil
 }
@@ -56,7 +56,7 @@ func (c *Client) PrepareQuery(ctx context.Context, database, query string) (*Que
 // QueryRequest represents a prepared query.
 type QueryRequest struct {
 	client          *Client
-	database        string
+	namespace       string
 	query           string
 	grpcCallOptions []grpc.CallOption
 	allocator       memory.Allocator
@@ -65,7 +65,7 @@ type QueryRequest struct {
 func newRequest(client *Client, database, query string) *QueryRequest {
 	return &QueryRequest{
 		client:    client,
-		database:  database,
+		namespace: database,
 		query:     query,
 		allocator: memory.DefaultAllocator,
 	}
@@ -76,7 +76,7 @@ func newRequest(client *Client, database, query string) *QueryRequest {
 func (r *QueryRequest) WithCallOption(grpcCallOption grpc.CallOption) *QueryRequest {
 	return &QueryRequest{
 		client:          r.client,
-		database:        r.database,
+		namespace:       r.namespace,
 		query:           r.query,
 		grpcCallOptions: append(r.grpcCallOptions, grpcCallOption),
 		allocator:       r.allocator,
@@ -88,7 +88,7 @@ func (r *QueryRequest) WithCallOption(grpcCallOption grpc.CallOption) *QueryRequ
 func (r *QueryRequest) WithAllocator(alloc memory.Allocator) *QueryRequest {
 	return &QueryRequest{
 		client:          r.client,
-		database:        r.database,
+		namespace:       r.namespace,
 		query:           r.query,
 		grpcCallOptions: r.grpcCallOptions,
 		allocator:       alloc,
@@ -107,8 +107,8 @@ func (r *QueryRequest) Query(ctx context.Context, args ...interface{}) (*flight.
 		return nil, errors.New("query arguments are not supported")
 	}
 	ticket, err := json.Marshal(ticketReadInfo{
-		DatabaseName: r.database,
-		SQLQuery:     r.query,
+		NamespaceName: r.namespace,
+		SQLQuery:      r.query,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal Arrow DoGet ticket: %w", err)
