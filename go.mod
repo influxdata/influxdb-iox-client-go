@@ -3,7 +3,7 @@ module github.com/influxdata/influxdb-iox-client-go/v2
 go 1.18
 
 require (
-	github.com/apache/arrow/go/v10 v10.0.0
+	github.com/apache/arrow/go/v10 v10.0.1
 	github.com/influxdata/line-protocol/v2 v2.2.1
 	github.com/stretchr/testify v1.8.1
 	google.golang.org/grpc v1.49.0
@@ -26,7 +26,6 @@ require (
 	github.com/minio/c2goasm v0.0.0-20190812172519-36a3d3bbc4f3 // indirect
 	github.com/pierrec/lz4/v4 v4.1.16 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/rogpeppe/go-internal v1.9.0 // indirect
 	github.com/zeebo/xxh3 v1.0.2 // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
 	golang.org/x/net v0.0.0-20220909164309-bea034e7d591 // indirect
