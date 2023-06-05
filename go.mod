@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/apache/arrow/go/v10 v10.0.1
 	github.com/influxdata/line-protocol/v2 v2.2.1
-	github.com/stretchr/testify v1.8.3
+	github.com/stretchr/testify v1.8.4
 	google.golang.org/grpc v1.49.0
 	google.golang.org/protobuf v1.30.0
 )
