@@ -1,6 +1,9 @@
+> [!WARNING]
+> This module is no longer being maintained. Please use the official module at [github.com/InfluxCommunity/influxdb3-go](https://github.com/InfluxCommunity/influxdb3-go).
+
 # InfluxDB IOx Client for Go
 
-Package `influxdbiox` is the official Go client for InfluxDB/IOx.
+Package `influxdbiox` is a Go client for InfluxDB/IOx.
 
 InfluxDB/IOx uses Arrow Flight gRPC for queries.
 This client makes it easy to use that interface.
