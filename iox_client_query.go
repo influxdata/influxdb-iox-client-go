@@ -32,7 +32,7 @@ func (c *Client) Handshake(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	if !bytes.Equal(resp.Payload, payload) {
+	if !bytes.Equal(resp.Payload, payload) && resp.Payload != nil {
 		return errors.New("handshake payload response does not match request")
 	}
 	return nil
